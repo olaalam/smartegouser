@@ -5,6 +5,7 @@ import LoginPage     from "./pages/LoginPage";
 import DashboardPage from "./pages/DashboardPage";
 import OrderPage     from "./pages/OrderPage";
 import ProfilePage   from "./pages/ProfilePage";
+import WhatsAppPage  from "./pages/WhatsAppWizard";
 
 // ─── Route guards ─────────────────────────────────────────────────────────────
 
@@ -50,6 +51,11 @@ export default function App() {
         <Route
           path="/profile"
           element={<PrivateRoute><ProfilePage /></PrivateRoute>}
+        />
+
+        <Route
+          path="/whatsapp"
+          element={<PrivateRoute><WhatsAppPage /></PrivateRoute>}
         />
 
         <Route path="*" element={<Navigate to="/login" replace />} />

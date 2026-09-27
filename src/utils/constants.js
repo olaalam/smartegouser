@@ -12,4 +12,9 @@ export const API_ENDPOINTS = {
     PAGES:    "user/messenger/pages",
     ORDERS:   "user/messenger/orders",
   },
+  WHATSAPP: {
+    ITEMS:    "user/whats/items",
+    PACKAGES: "user/whats/packages",
+    ORDERS:   "user/whats/orders",
+  },
 };

@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   MessageSquare,
+  MessageCircle,
   TrendingUp,
   Infinity,
   CalendarDays,
@@ -34,6 +35,7 @@ const T = {
     managing:       (r)    => `Managing · ${r}`,
     overview:       "Here's your Messenger auto-reply overview",
     newSub:         "New Subscription",
+    whatsApp:       "WhatsApp numbers",
     filterDate:     "Filter by date",
     filtered:       (f, t) => `Filtered: ${f} → ${t}`,
     from:           "From",
@@ -67,6 +69,7 @@ const T = {
     managing:       (r)    => `إدارة · ${r}`,
     overview:       "نظرة عامة على نظام الرد التلقائي",
     newSub:         "اشتراك جديد",
+    whatsApp:       "أرقام واتساب",
     filterDate:     "تصفية بالتاريخ",
     filtered:       (f, t) => `مُصفَّى: ${f} → ${t}`,
     from:           "من",
@@ -269,6 +272,11 @@ export default function DashboardPage() {
           </div>
 
           <div className="flex items-center gap-2 flex-wrap">
+            <button type="button" onClick={() => navigate("/whatsapp")}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold border border-[var(--border)] text-[var(--foreground)] bg-[var(--card)] hover:bg-[var(--muted)] transition-colors">
+              <MessageCircle className="w-4 h-4" aria-hidden="true" />
+              {t.whatsApp}
+            </button>
             <button type="button" onClick={() => navigate("/order")}
               className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-[var(--primary-foreground)] shadow-sm transition-all duration-150 active:scale-95"
               style={{ background: "var(--primary)" }}>

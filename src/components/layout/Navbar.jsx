@@ -13,6 +13,7 @@ import { API_ENDPOINTS } from "../../utils/constants";
 const BACK_ROUTES = {
   "/order":   "/dashboard",
   "/profile": "/dashboard",
+  "/whatsapp": "/dashboard",
 };
 
 export default function Navbar() {
