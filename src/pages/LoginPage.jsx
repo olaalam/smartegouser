@@ -2,11 +2,10 @@ import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { AlertCircle, Sun, Moon } from "lucide-react";
+import { AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { usePost } from "../hooks/usePost";
 import { setAuth, saveAuthToStorage } from "../redux/slices/authSlice";
-import { setLang, toggleTheme } from "../redux/slices/uiSlice";
 import { API_ENDPOINTS } from "../utils/constants";
 import { initFacebookSDK, loginWithFacebook } from "../utils/facebookAuth";
 
@@ -62,9 +61,7 @@ export default function LoginPage() {
   const dispatch  = useDispatch();
   const navigate  = useNavigate();
   const lang      = useSelector((s) => s.ui.lang);
-  const theme     = useSelector((s) => s.ui.theme);
   const t         = T[lang] ?? T.en;
-  const isDark    = theme === "dark";
 
   const { execute, loading } = usePost();
   const [error, setError]    = useState(null);
@@ -114,43 +111,6 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-[var(--background)] flex flex-col items-center justify-center px-4 py-12 relative"
       style={{ backgroundImage: "radial-gradient(ellipse 80% 55% at 50% -5%, oklch(0.88 0.12 138 / 25%), transparent)" }}>
-
-      {/* ── Top-right controls ── */}
-      <div className="absolute top-4 end-4 flex items-center gap-1.5">
-        {/* Language */}
-        <div className="flex items-center bg-[var(--muted)] rounded-xl p-0.5 gap-0.5">
-          {["en", "ar"].map((l) => (
-            <button key={l} type="button" onClick={() => dispatch(setLang(l))}
-              className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all duration-200
-                focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]
-                ${lang === l
-                  ? "bg-[var(--card)] text-[var(--primary)] shadow-sm"
-                  : "text-[var(--muted-foreground)] hover:text-[var(--foreground)]"}`}
-              aria-pressed={lang === l}>
-              {l.toUpperCase()}
-            </button>
-          ))}
-        </div>
-
-        {/* Theme */}
-        <button type="button" onClick={() => dispatch(toggleTheme())}
-          className="w-8 h-8 rounded-xl flex items-center justify-center
-            text-[var(--muted-foreground)] hover:text-[var(--foreground)]
-            hover:bg-[var(--muted)] transition-colors
-            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]"
-          aria-label={isDark ? "Switch to light" : "Switch to dark"}>
-          <AnimatePresence mode="wait" initial={false}>
-            <motion.span key={isDark ? "sun" : "moon"}
-              initial={{ rotate: -30, opacity: 0, scale: 0.7 }}
-              animate={{ rotate: 0, opacity: 1, scale: 1 }}
-              exit={{ rotate: 30, opacity: 0, scale: 0.7 }}
-              transition={{ duration: 0.2 }}
-              className="flex items-center justify-center">
-              {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-            </motion.span>
-          </AnimatePresence>
-        </button>
-      </div>
 
       {/* ── Card ── */}
       <motion.div

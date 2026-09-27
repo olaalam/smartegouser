@@ -7,7 +7,6 @@ export function saveAuthToStorage(data) {
   if (!data) return;
   const { token, token_type, user, is_new } = data;
   if (token)      localStorage.setItem("token",      token);
-  if (token_type) localStorage.setItem("token_type", token_type);
   if (user)       localStorage.setItem("user",       JSON.stringify(user));
   if (is_new !== undefined) localStorage.setItem("is_new", String(is_new));
 }
