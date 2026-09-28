@@ -1,11 +1,13 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { Toaster } from "sonner";
-import LoginPage     from "./pages/LoginPage";
-import DashboardPage from "./pages/DashboardPage";
-import OrderPage     from "./pages/OrderPage";
-import ProfilePage   from "./pages/ProfilePage";
-import WhatsAppPage  from "./pages/WhatsAppWizard";
+import LoginPage          from "./pages/LoginPage";
+import DashboardPage      from "./pages/DashboardPage";
+import OrderPage          from "./pages/OrderPage";
+import ProfilePage        from "./pages/ProfilePage";
+import WhatsAppPage       from "./pages/WhatsAppWizard";
+import MessengerChatPage  from "./pages/MessengerChatPage";
+import WhatsAppChatPage   from "./pages/WhatsAppChatPage";
 
 // ─── Route guards ─────────────────────────────────────────────────────────────
 
@@ -56,6 +58,16 @@ export default function App() {
         <Route
           path="/whatsapp"
           element={<PrivateRoute><WhatsAppPage /></PrivateRoute>}
+        />
+
+        <Route
+          path="/messenger-chat"
+          element={<PrivateRoute><MessengerChatPage /></PrivateRoute>}
+        />
+
+        <Route
+          path="/whatsapp-chat"
+          element={<PrivateRoute><WhatsAppChatPage /></PrivateRoute>}
         />
 
         <Route path="*" element={<Navigate to="/login" replace />} />
