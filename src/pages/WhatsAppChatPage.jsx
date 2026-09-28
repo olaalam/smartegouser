@@ -366,7 +366,7 @@ export default function WhatsAppChatPage() {
             >
               {numbers.map((n) => (
                 <option key={n.id} value={n.id}>
-                  {n.phone} 
+                  {n.phone}
                 </option>
               ))}
             </select>
