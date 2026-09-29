@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, KeyRound } from "lucide-react";
 import { toast } from "sonner";
 import { usePost } from "../hooks/usePost";
 import { setAuth, saveAuthToStorage } from "../redux/slices/authSlice";
@@ -15,26 +15,34 @@ const FB_DEV_TOKEN = import.meta.env.VITE_FB_DEV_TOKEN;
 // ─── Translations ─────────────────────────────────────────────────────────────
 const T = {
   en: {
-    tagline:   "Sign in to continue",
-    btnIdle:   "Continue with Facebook",
-    btnFb:     "Opening Facebook…",
-    btnApi:    "Signing you in…",
-    agree:     "By continuing you agree to our",
-    terms:     "Terms of Service",
-    privacy:   "Privacy Policy",
-    and:       "and",
-    copyright: `© ${new Date().getFullYear()} SmartEgo. All rights reserved.`,
+    tagline:          "Sign in to continue",
+    btnIdle:          "Continue with Facebook",
+    btnFb:            "Opening Facebook…",
+    btnApi:           "Signing you in…",
+    orManual:         "OR ENTER ACCESS TOKEN MANUALLY",
+    tokenLabel:       "Facebook Access Token",
+    tokenPlaceholder: "EAA...",
+    btnSubmitToken:   "Sign in with Token",
+    agree:            "By continuing you agree to our",
+    terms:            "Terms of Service",
+    privacy:          "Privacy Policy",
+    and:              "and",
+    copyright:        `© ${new Date().getFullYear()} SmartEgo. All rights reserved.`,
   },
   ar: {
-    tagline:   "سجّل دخولك للمتابعة",
-    btnIdle:   "المتابعة بواسطة فيسبوك",
-    btnFb:     "جاري فتح فيسبوك…",
-    btnApi:    "جاري تسجيل الدخول…",
-    agree:     "بالمتابعة أنت توافق على",
-    terms:     "شروط الاستخدام",
-    privacy:   "سياسة الخصوصية",
-    and:       "و",
-    copyright: `© ${new Date().getFullYear()} SmartEgo. جميع الحقوق محفوظة.`,
+    tagline:          "سجّل دخولك للمتابعة",
+    btnIdle:          "المتابعة بواسطة فيسبوك",
+    btnFb:            "جاري فتح فيسبوك…",
+    btnApi:           "جاري تسجيل الدخول…",
+    orManual:         "أو أدخل الـ Access Token يدويًا",
+    tokenLabel:       "Facebook Access Token",
+    tokenPlaceholder: "EAA...",
+    btnSubmitToken:   "تسجيل الدخول بالـ Token",
+    agree:            "بالمتابعة أنت توافق على",
+    terms:            "شروط الاستخدام",
+    privacy:          "سياسة الخصوصية",
+    and:              "و",
+    copyright:        `© ${new Date().getFullYear()} SmartEgo. جميع الحقوق محفوظة.`,
   },
 };
 
@@ -64,8 +72,9 @@ export default function LoginPage() {
   const t         = T[lang] ?? T.en;
 
   const { execute, loading } = usePost();
-  const [error, setError]    = useState(null);
-  const [step, setStep]      = useState("idle");
+  const [error, setError]        = useState(null);
+  const [step, setStep]          = useState("idle");
+  const [customToken, setCustomToken] = useState("");
 
   const isLoading = loading || step !== "idle";
 
@@ -106,6 +115,18 @@ export default function LoginPage() {
     }
   };
 
+  const handleManualTokenSubmit = async (e) => {
+    e.preventDefault();
+    if (!customToken.trim()) {
+      const msg = lang === "ar" ? "يرجى إدخال Access Token أولاً." : "Please enter an Access Token first.";
+      setError(msg);
+      toast.error(msg);
+      return;
+    }
+    setError(null);
+    await loginWithToken(customToken.trim());
+  };
+
   const btnLabel = step === "fb" ? t.btnFb : step === "api" ? t.btnApi : t.btnIdle;
 
   return (
@@ -125,7 +146,7 @@ export default function LoginPage() {
 
           <div className="px-8 pt-10 pb-10">
             {/* Brand */}
-            <div className="flex flex-col items-center gap-3 mb-10">
+            <div className="flex flex-col items-center gap-3 mb-8">
               <div className="w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg shadow-[var(--primary)]/25"
                 style={{ background: "var(--primary)" }}>
                 <span className="text-white text-2xl font-bold select-none">S</span>
@@ -147,6 +168,40 @@ export default function LoginPage() {
               {isLoading ? <><SpinnerIcon />{btnLabel}</> : <><FacebookIcon />{btnLabel}</>}
             </button>
 
+            {/* Divider for Manual Token */}
+            <div className="relative my-6">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-[var(--border)]" />
+              </div>
+              <div className="relative flex justify-center">
+                <span className="bg-[var(--card)] px-3 text-[10px] uppercase font-bold tracking-wider text-[var(--muted-foreground)]">
+                  {t.orManual}
+                </span>
+              </div>
+            </div>
+
+            {/* Manual Token Form */}
+            <form onSubmit={handleManualTokenSubmit} className="flex flex-col gap-3">
+              <div className="relative">
+                <input
+                  type="text"
+                  value={customToken}
+                  onChange={(e) => setCustomToken(e.target.value)}
+                  placeholder={t.tokenPlaceholder}
+                  disabled={isLoading}
+                  className="w-full px-4 py-3 text-xs rounded-xl border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] placeholder:[var(--muted-foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)] transition-all dir-ltr"
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={isLoading || !customToken.trim()}
+                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold bg-[var(--primary)] text-white hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+              >
+                <KeyRound className="w-4 h-4" />
+                <span>{t.btnSubmitToken}</span>
+              </button>
+            </form>
+
             {/* Error */}
             <AnimatePresence>
               {error && (
@@ -163,7 +218,7 @@ export default function LoginPage() {
             </AnimatePresence>
 
             {/* Divider */}
-            <div className="relative my-8">
+            <div className="relative my-6">
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-[var(--border)]" />
               </div>
