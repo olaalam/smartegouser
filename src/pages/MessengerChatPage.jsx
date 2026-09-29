@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { useSelector } from "react-redux";
 import {
   Search, Send, ImageIcon, Smile, MoreHorizontal,
   ChevronLeft, Phone, Video, Info, CheckCheck, Check,
@@ -21,22 +23,43 @@ import {
   markMessengerRead,
 } from "../api/messengerApi";
 import { getEcho } from "../api/echoService";
+import { formatAvailableMessages, hasChatAccess } from "../utils/chatAccess";
+import { localizeApiLabel } from "../utils/localization";
+
+const CHAT_TEXT = {
+  en: {
+    now: "now", minutes: (count) => `${count}m`, search: "Search conversations...",
+    noSubscription: "No subscription", subscriptionRequired: "An active subscription is required to view chats.",
+    availableMessages: (count) => `Available messages: ${count}`, subscribe: "Subscribe to open chats",
+    noConversations: "No conversations", chooseConversation: "Choose a conversation to get started",
+    choosePage: "Choose a page first", page: (name) => `Page: ${name}`, you: "You: ", online: "Online",
+    messagePlaceholder: "Write a message...", refresh: "Refresh conversations",
+  },
+  ar: {
+    now: "الآن", minutes: (count) => `${count} د`, search: "ابحث في المحادثات...",
+    noSubscription: "بدون اشتراك", subscriptionRequired: "المحادثات متاحة مع اشتراك نشط فقط.",
+    availableMessages: (count) => `الرسائل المتاحة: ${count}`, subscribe: "اشترك لفتح المحادثات",
+    noConversations: "لا توجد محادثات", chooseConversation: "اختر محادثة للبدء",
+    choosePage: "اختر صفحة أولاً", page: (name) => `صفحة: ${name}`, you: "أنت: ", online: "متصل الآن",
+    messagePlaceholder: "اكتب رسالة...", refresh: "تحديث المحادثات",
+  },
+};
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
-const fmt = (iso) => {
+const fmt = (iso, t, locale) => {
   if (!iso) return "";
   const d = new Date(iso);
   const now = new Date();
   const diff = (now - d) / 1000;
-  if (diff < 60) return "الآن";
-  if (diff < 3600) return `${Math.floor(diff / 60)} د`;
-  if (diff < 86400) return d.toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit" });
-  return d.toLocaleDateString("ar-EG", { day: "numeric", month: "short" });
+  if (diff < 60) return t.now;
+  if (diff < 3600) return t.minutes(Math.floor(diff / 60));
+  if (diff < 86400) return d.toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" });
+  return d.toLocaleDateString(locale, { day: "numeric", month: "short" });
 };
 
-const msgTime = (iso) => {
+const msgTime = (iso, locale) => {
   if (!iso) return "";
-  return new Date(iso).toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit" });
+  return new Date(iso).toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" });
 };
 
 // ─── Avatar ───────────────────────────────────────────────────────────────────
@@ -72,6 +95,13 @@ function Avatar({ name = "?", size = 40, online = false }) {
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function MessengerChatPage() {
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const lang = useSelector((state) => state.ui.lang);
+  const isRTL = lang === "ar";
+  const locale = isRTL ? "ar-EG" : "en-GB";
+  const t = CHAT_TEXT[lang] ?? CHAT_TEXT.en;
+  const requestedPageId = searchParams.get("pageId");
   // Pages
   const [pages, setPages] = useState([]);
   const [selectedPage, setSelectedPage] = useState(null);
@@ -100,20 +130,20 @@ export default function MessengerChatPage() {
       .then((r) => {
         const list = r.data?.data || [];
         setPages(list);
-        // اختار الـ active page أولاً، لو مفيش خد الأول
-        const activePage = list.find((p) => p.status === "active") || list[0];
-        if (activePage) setSelectedPage(activePage);
+          const requestedPage = list.find((page) => String(page.page_id) === requestedPageId);
+          const activePage = list.find(hasChatAccess) || list[0];
+          const nextPage = requestedPage || activePage;
+          if (nextPage) setSelectedPage(nextPage);
       })
       .catch(console.error)
       .finally(() => setPagesLoading(false));
-  }, []);
+        }, [requestedPageId]);
 
   // ── Load Conversations ───────────────────────────────────────────────────────
   useEffect(() => {
     if (!selectedPage) return;
+    if (!hasChatAccess(selectedPage)) return;
     setConvsLoading(true);
-    setSelectedConv(null);
-    setMessages([]);
     getMessengerConversations({ page_id: selectedPage.page_id })
       .then((r) => setConversations(r.data?.data || []))
       .catch(console.error)
@@ -122,7 +152,7 @@ export default function MessengerChatPage() {
 
   // ── Load Messages ────────────────────────────────────────────────────────────
   const loadMessages = useCallback((page, conv) => {
-    if (!page || !conv) return;
+    if (!page || !hasChatAccess(page) || !conv) return;
     setMsgsLoading(true);
     getMessengerMessages({ page_id: page.page_id, sender_id: conv.sender_id })
       .then((r) => setMessages((r.data?.data || []).reverse()))
@@ -141,7 +171,7 @@ export default function MessengerChatPage() {
 
   // ── Real-time: Laravel Echo / Reverb ────────────────────────────────────────
   useEffect(() => {
-    if (!selectedPage || !selectedConv) return;
+    if (!selectedPage || !hasChatAccess(selectedPage) || !selectedConv) return;
 
     const echo = getEcho();
     const channelName = `userChat_${selectedConv.sender_id}_${selectedPage.page_id}`;
@@ -186,7 +216,7 @@ export default function MessengerChatPage() {
   // ── Send Message ─────────────────────────────────────────────────────────────
   const handleSend = async () => {
     const text = messageText.trim();
-    if (!text || !selectedPage || !selectedConv || sending) return;
+    if (!text || !selectedPage || !hasChatAccess(selectedPage) || !selectedConv || sending) return;
     setSending(true);
     const optimistic = {
       id: `opt_${Date.now()}`,
@@ -228,7 +258,7 @@ export default function MessengerChatPage() {
 
   // ── Render ──────────────────────────────────────────────────────────────────
   return (
-    <div style={styles.root}>
+    <div style={{ ...styles.root, direction: isRTL ? "rtl" : "ltr" }}>
       {/* ── Sidebar ─────────────────────────────────────────── */}
       <aside style={styles.sidebar}>
         {/* Header */}
@@ -239,7 +269,7 @@ export default function MessengerChatPage() {
             </div>
             <span style={styles.sidebarTitle}>Messenger</span>
           </div>
-          <button style={styles.iconBtn}><RefreshCw size={18} /></button>
+          <button style={styles.iconBtn} title={t.refresh} aria-label={t.refresh}><RefreshCw size={18} /></button>
         </div>
 
         {/* Page Selector - always show */}
@@ -250,20 +280,27 @@ export default function MessengerChatPage() {
               value={selectedPage?.page_id || ""}
               onChange={(e) => {
                 const p = pages.find((pg) => pg.page_id === e.target.value);
+                setSelectedConv(null);
+                setMessages([]);
+                setConversations([]);
+                setConvsLoading(false);
                 setSelectedPage(p);
               }}
             >
               {pages.map((p) => (
-                <option key={p.page_id} value={p.page_id}>
-                  {p.status === "active" ? "✅" : "⛔"} {p.page_name}
-                </option>
+                  <option key={p.page_id} value={p.page_id}>
+                    {hasChatAccess(p) ? "✅" : "🔒"} {p.page_name} · {localizeApiLabel(p.subscription_status, lang, t.noSubscription)} · {formatAvailableMessages(p.available_msgs)}
+                  </option>
               ))}
             </select>
-            {selectedPage?.status === "disabled" && (
-              <p style={{ color: "#fa3c4c", fontSize: 11, marginTop: 4, paddingRight: 4 }}>
-                ⚠️ هذه الصفحة غير مفعّلة
-              </p>
-            )}
+              {selectedPage && !hasChatAccess(selectedPage) && (
+                <div style={{ color: "#fa3c3c", fontSize: 11, marginTop: 6, paddingRight: 4 }}>
+                  <p>⚠️ {t.subscriptionRequired} {t.availableMessages(formatAvailableMessages(selectedPage.available_msgs))}</p>
+                  <button type="button" onClick={() => navigate(`/order?pageId=${encodeURIComponent(selectedPage.page_id)}`)} style={{ marginTop: 6, color: "#7db7ff", fontWeight: 700 }}>
+                    {t.subscribe}
+                  </button>
+                </div>
+              )}
           </div>
         )}
 
@@ -272,7 +309,7 @@ export default function MessengerChatPage() {
           <Search size={15} color="#8a8d91" style={{ flexShrink: 0 }} />
           <input
             style={styles.searchInput}
-            placeholder="ابحث في المحادثات..."
+            placeholder={t.search}
             value={convSearch}
             onChange={(e) => setConvSearch(e.target.value)}
           />
@@ -282,10 +319,19 @@ export default function MessengerChatPage() {
         <div style={styles.convList}>
           {pagesLoading || convsLoading ? (
             <div style={styles.centered}><Loader2 size={28} className="spin" color="#0084ff" style={{ animation: "spin 1s linear infinite" }} /></div>
+          ) : selectedPage && !hasChatAccess(selectedPage) ? (
+            <div style={styles.emptyConvs}>
+              <MessageCircle size={40} color="#b0b3b8" />
+              <p style={{ color: "#e4e6eb", marginTop: 10, fontSize: 13 }}>{t.subscriptionRequired}</p>
+              <p style={{ color: "#b0b3b8", marginTop: 5, fontSize: 12 }}>{t.availableMessages(formatAvailableMessages(selectedPage.available_msgs))}</p>
+              <button type="button" onClick={() => navigate(`/order?pageId=${encodeURIComponent(selectedPage.page_id)}`)} style={{ marginTop: 12, color: "#7db7ff", fontSize: 13, fontWeight: 700 }}>
+                {t.subscribe}
+              </button>
+            </div>
           ) : filteredConvs.length === 0 ? (
             <div style={styles.emptyConvs}>
               <MessageCircle size={40} color="#b0b3b8" />
-              <p style={{ color: "#b0b3b8", marginTop: 8, fontSize: 13 }}>لا توجد محادثات</p>
+              <p style={{ color: "#b0b3b8", marginTop: 8, fontSize: 13 }}>{t.noConversations}</p>
             </div>
           ) : filteredConvs.map((conv) => (
             <motion.div
@@ -311,7 +357,7 @@ export default function MessengerChatPage() {
                   <span style={{ ...styles.convName, fontWeight: conv.unread_count > 0 ? 700 : 500 }}>
                     {conv.name || conv.sender_id}
                   </span>
-                  <span style={styles.convTime}>{fmt(conv.last_message_at)}</span>
+                  <span style={styles.convTime}>{fmt(conv.last_message_at, t, locale)}</span>
                 </div>
                 <div style={styles.convBottomRow}>
                   <span style={{
@@ -319,7 +365,7 @@ export default function MessengerChatPage() {
                     fontWeight: conv.unread_count > 0 ? 600 : 400,
                     color: conv.unread_count > 0 ? "#e4e6eb" : "#b0b3b8",
                   }}>
-                    {conv.last_sender_type === "admin" && <span style={{ color: "#0084ff" }}>أنت: </span>}
+                    {conv.last_sender_type === "admin" && <span style={{ color: "#0084ff" }}>{t.you}</span>}
                     {conv.last_message?.slice(0, 35)}{conv.last_message?.length > 35 ? "..." : ""}
                   </span>
                   {conv.unread_count > 0 && (
@@ -343,11 +389,18 @@ export default function MessengerChatPage() {
             >
               <div style={styles.bigFbIcon}><FacebookIcon size={48} color="#fff" /></div>
               <h2 style={{ color: "#e4e6eb", marginTop: 20, fontSize: 22, fontWeight: 700 }}>
-                اختر محادثة للبدء
+                {selectedPage && !hasChatAccess(selectedPage) ? t.subscriptionRequired : t.chooseConversation}
               </h2>
               <p style={{ color: "#b0b3b8", marginTop: 8, fontSize: 14 }}>
-                {selectedPage ? `صفحة: ${selectedPage.page_name}` : "اختر صفحة أولاً"}
+                {selectedPage && !hasChatAccess(selectedPage)
+                  ? t.availableMessages(formatAvailableMessages(selectedPage.available_msgs))
+                  : selectedPage ? t.page(selectedPage.page_name) : t.choosePage}
               </p>
+              {selectedPage && !hasChatAccess(selectedPage) && (
+                <button type="button" onClick={() => navigate(`/order?pageId=${encodeURIComponent(selectedPage.page_id)}`)} style={{ marginTop: 12, color: "#7db7ff", fontWeight: 700 }}>
+                  {t.subscribe}
+                </button>
+              )}
             </motion.div>
           </div>
         ) : (
@@ -358,11 +411,11 @@ export default function MessengerChatPage() {
                 <ChevronLeft size={22} />
               </button>
               <Avatar name={selectedConv.name || "?"} size={40} online />
-              <div style={{ flex: 1, marginRight: 10 }}>
+              <div style={{ flex: 1, marginInlineStart: 10 }}>
                 <div style={{ color: "#e4e6eb", fontWeight: 700, fontSize: 15 }}>
                   {selectedConv.name || selectedConv.sender_id}
                 </div>
-                <div style={{ color: "#31a24c", fontSize: 12 }}>متصل الآن</div>
+                <div style={{ color: "#31a24c", fontSize: 12 }}>{t.online}</div>
               </div>
               <div style={{ display: "flex", gap: 4 }}>
                 <button style={styles.headerBtn}><Info size={18} /></button>
@@ -425,7 +478,7 @@ export default function MessengerChatPage() {
                               </div>
                             )}
                             <div style={styles.msgMeta}>
-                              <span style={{ color: "#b0b3b8", fontSize: 11 }}>{msgTime(msg.created_at)}</span>
+                              <span style={{ color: "#b0b3b8", fontSize: 11 }}>{msgTime(msg.created_at, locale)}</span>
                               {isAdmin && (
                                 msg.is_read
                                   ? <CheckCheck size={14} color="#0084ff" />
@@ -450,7 +503,7 @@ export default function MessengerChatPage() {
                 <input
                   ref={inputRef}
                   style={styles.msgInput}
-                  placeholder="اكتب رسالة..."
+                  placeholder={t.messagePlaceholder}
                   value={messageText}
                   onChange={(e) => setMessageText(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSend()}

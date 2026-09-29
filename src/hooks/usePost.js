@@ -1,7 +1,9 @@
 import { useState } from "react";
+import { useSelector } from "react-redux";
 import axiosInstance from "../api/axiosInstance";
 
 export const usePost = () => {
+  const lang = useSelector((state) => state.ui.lang);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -12,7 +14,7 @@ export const usePost = () => {
       const response = await axiosInstance.post(url, payload, config);
       return { success: true, data: response.data };
     } catch (err) {
-      const message = err.response?.data?.message || "فشلت عملية الإرسال";
+      const message = err.response?.data?.message || (lang === "ar" ? "فشلت عملية الإرسال" : "The request could not be sent.");
       setError(message);
       return { success: false, error: message };
     } finally {

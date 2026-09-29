@@ -33,7 +33,7 @@ export const useGet = (url, params = {}, options = {}) => {
         setData(response.data);
       } catch (err) {
         if (!axios.isCancel(err)) {
-          setError(err.response?.data?.message || "Failed to load data.");
+          setError(err.response?.data?.message || (lang === "ar" ? "فشل تحميل البيانات." : "Failed to load data."));
         }
       } finally {
         setLoading(false);

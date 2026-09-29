@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { toast } from "sonner";
 import {
@@ -15,7 +15,6 @@ import Navbar      from "../components/layout/Navbar";
 import Loader      from "../components/common/Loader";
 import SectionCard from "../components/ui/SectionCard";
 import EmptyState  from "../components/ui/EmptyState";
-import InfoRow     from "../components/ui/InfoRow";
 import PackageCard from "../components/messenger/PackageCard";
 import PageItem    from "../components/messenger/PageItem";
 
@@ -129,13 +128,14 @@ function NavBtn({ onClick, disabled, primary, isRTL, children }) {
 
 export default function OrderPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const lang     = useSelector((s) => s.ui.lang);
   const t        = T[lang] ?? T.en;
   const isRTL    = lang === "ar";
 
   const [step, setStep]               = useState(1);
   const [selectedPkg,  setSelectedPkg]  = useState(null);
-  const [selectedPage, setSelectedPage] = useState(null);
+  const [selectedPageOverride, setSelectedPageOverride] = useState(null);
 
   const { data: pkgsData,  loading: pkgsLoading,  error: pkgsError  } = useGet(API_ENDPOINTS.MESSENGER.PACKAGES);
   const { data: pagesData, loading: pagesLoading, error: pagesError } = useGet(API_ENDPOINTS.MESSENGER.PAGES);
@@ -143,6 +143,8 @@ export default function OrderPage() {
 
   const packages = pkgsData?.face_packages ?? [];
   const pages    = pagesData?.data         ?? [];
+  const requestedPageId = searchParams.get("pageId");
+  const selectedPage = selectedPageOverride ?? pages.find((page) => String(page.page_id) === requestedPageId) ?? null;
 
   const handleSubmit = async () => {
     if (!selectedPkg || !selectedPage) return;
@@ -231,7 +233,7 @@ export default function OrderPage() {
                     : pages.map((page, i) => (
                         <PageItem key={page.page_id} page={page}
                           selected={selectedPage?.page_id === page.page_id}
-                          onSelect={setSelectedPage} delay={i * 0.04} />
+                          onSelect={setSelectedPageOverride} delay={i * 0.04} />
                       ))}
                 </div>
               </SectionCard>

@@ -1,6 +1,8 @@
-import React from "react";
+import { useSelector } from "react-redux";
 
-export const Loader = ({ fullScreen = false, text = "جاري التحميل..." }) => {
+export const Loader = ({ fullScreen = false, text }) => {
+  const lang = useSelector((state) => state.ui.lang);
+  const loadingText = text ?? (lang === "ar" ? "جاري التحميل..." : "Loading...");
   const loaderContent = (
     <div className="flex flex-col items-center justify-center space-y-4">
       <div className="relative flex items-center justify-center">
@@ -9,9 +11,9 @@ export const Loader = ({ fullScreen = false, text = "جاري التحميل..."
         {/* Center pulse dot */}
         <div className="absolute w-3 h-3 bg-[var(--primary)] rounded-full animate-ping" />
       </div>
-      {text && (
+      {loadingText && (
         <p className="text-sm font-medium text-[var(--muted-foreground)] animate-pulse">
-          {text}
+          {loadingText}
         </p>
       )}
     </div>

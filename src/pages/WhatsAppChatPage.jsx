@@ -1,5 +1,7 @@
 import { useState, useEffect, useLayoutEffect, useRef, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useNavigate } from "react-router-dom";
+import { useSelector } from "react-redux";
 import {
   Search, Send, Smile, MoreVertical,
   ChevronLeft, Camera,
@@ -11,6 +13,8 @@ import { useGet } from "../hooks/useGet";
 import { usePost } from "../hooks/usePost";
 import { getWhatsAppConversations, getWhatsAppMessages } from "../api/whatsappApi";
 import { getEcho } from "../api/echoService";
+import { formatAvailableMessages, hasChatAccess } from "../utils/chatAccess";
+import { localizeApiLabel } from "../utils/localization";
 
 // ─── Endpoints / paging ───────────────────────────────────────────────────────
 const NUMBERS_URL = "user/chat/whatsapp/numbers";
@@ -19,6 +23,29 @@ const MARK_READ_URL = "user/chat/mark-as-read";
 const NUMBERS_PARAMS = { per_page: 100 };
 const CONVS_PER_PAGE = 30;
 const MSGS_PER_PAGE = 30;
+
+const CHAT_TEXT = {
+  en: {
+    now: "now", minutes: (count) => `${count}m`, today: "Today", me: "Me",
+    search: "Search by phone or name...", refresh: "Refresh conversations", noSubscription: "No subscription",
+    subscriptionRequired: "Chats are available with an active subscription only.",
+    availableMessages: (count) => `Available messages: ${count}`, subscribe: "Subscribe to open chats",
+    noConversations: "No conversations", chooseConversation: "Select a conversation to get started",
+    moreConversations: "Load more", olderMessages: "Load older messages",
+    encrypted: "Your messages are private and secure.", online: "Online", messagePlaceholder: "Type a message...",
+    conversationsError: "Could not load conversations.", messagesError: "Could not load messages.",
+  },
+  ar: {
+    now: "الآن", minutes: (count) => `${count} د`, today: "اليوم", me: "أنا",
+    search: "ابحث برقم الهاتف أو الاسم...", refresh: "تحديث المحادثات", noSubscription: "بدون اشتراك",
+    subscriptionRequired: "المحادثات متاحة مع اشتراك نشط فقط",
+    availableMessages: (count) => `الرسائل المتاحة: ${count}`, subscribe: "اشترك لفتح المحادثات",
+    noConversations: "لا توجد محادثات", chooseConversation: "اختر محادثة للبدء",
+    moreConversations: "تحميل المزيد", olderMessages: "تحميل رسائل أقدم",
+    encrypted: "رسائلك خاصة ومؤمنة.", online: "متصل الآن", messagePlaceholder: "اكتب رسالة...",
+    conversationsError: "تعذر تحميل المحادثات", messagesError: "تعذر تحميل الرسائل",
+  },
+};
 
 const isAdminMsg = (m) => Boolean(m?.is_admin) || m?.sender_type === "admin";
 // دمج بدون تكرار: العناصر الجديدة تتضاف في الآخر (للمحادثات)
@@ -33,21 +60,21 @@ const prependUnique = (older, current) => {
 };
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
-const fmt = (iso) => {
+const fmt = (iso, t, locale) => {
   if (!iso) return "";
   const d = new Date(iso);
   const now = new Date();
   const diff = (now - d) / 1000;
-  if (diff < 60) return "الآن";
-  if (diff < 3600) return `${Math.floor(diff / 60)} د`;
-  if (diff < 86400) return d.toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit" });
-  return d.toLocaleDateString("ar-EG", { day: "numeric", month: "short" });
+  if (diff < 60) return t.now;
+  if (diff < 3600) return t.minutes(Math.floor(diff / 60));
+  if (diff < 86400) return d.toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" });
+  return d.toLocaleDateString(locale, { day: "numeric", month: "short" });
 };
 
-const msgTime = (iso) => {
+const msgTime = (iso, locale) => {
   if (!iso) return "";
   const d = new Date(iso);
-  return d.toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit" });
+  return d.toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" });
 };
 
 // ─── WhatsApp Colors (Dark Theme) ─────────────────────────────────────────────
@@ -106,11 +133,17 @@ function WaLogo({ size = 28 }) {
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function WhatsAppChatPage() {
+  const navigate = useNavigate();
+  const lang = useSelector((state) => state.ui.lang);
+  const isRTL = lang === "ar";
+  const locale = isRTL ? "ar-EG" : "en-GB";
+  const t = CHAT_TEXT[lang] ?? CHAT_TEXT.en;
   // ── Numbers (useGet) ─────────────────────────────────────────────────────────
   const { data: numbersData, loading: numbersLoading } = useGet(NUMBERS_URL, NUMBERS_PARAMS);
   const numbers = useMemo(() => numbersData?.data ?? [], [numbersData]);
   const [selectedNumberId, setSelectedNumberId] = useState(null);
   const selectedNumber = numbers.find((n) => n.id === selectedNumberId) ?? null;
+  const selectedNumberCanChat = hasChatAccess(selectedNumber);
 
   // ── Conversations ────────────────────────────────────────────────────────────
   const [conversations, setConversations] = useState([]);
@@ -141,8 +174,10 @@ export default function WhatsAppChatPage() {
   const msgReqRef = useRef(0);
 
   // ── mark-as-read (usePost) ───────────────────────────────────────────────────
-  const markRead = (numberId, phone) =>
-    readPost(MARK_READ_URL, { channel: "whatsapp", whats_item_id: numberId, phone });
+  const markRead = (numberId, phone) => {
+    if (!hasChatAccess(numbers.find((number) => number.id === numberId))) return;
+    return readPost(MARK_READ_URL, { channel: "whatsapp", whats_item_id: numberId, phone });
+  };
   const markReadRef = useRef(markRead);
   markReadRef.current = markRead; // الـ listener بتاع Echo يستخدم آخر نسخة
 
@@ -150,13 +185,13 @@ export default function WhatsAppChatPage() {
   useEffect(() => {
     if (selectedNumberId || !numbers.length) return;
     const preferred =
-      numbers.find((n) => n.phone_status === "CONNECTED" || n.phone_status === "active") || numbers[0];
+      numbers.find(hasChatAccess) || numbers.find((n) => n.phone_status === "CONNECTED" || n.phone_status === "active") || numbers[0];
     setSelectedNumberId(preferred.id);
   }, [numbers, selectedNumberId]);
 
   // ── 2. Conversations (page 1 + load more) ────────────────────────────────────
   const loadConversations = useCallback(async (page = 1) => {
-    if (!selectedNumberId) return;
+    if (!selectedNumberId || !hasChatAccess(selectedNumber)) return;
     const reqId = ++convReqRef.current;
     if (page === 1) setConvsLoading(true); else setConvsLoadingMore(true);
     try {
@@ -169,11 +204,11 @@ export default function WhatsAppChatPage() {
       setConvPage(page);
       setConvHasMore(list.length >= CONVS_PER_PAGE);
     } catch (err) {
-      if (reqId === convReqRef.current) toast.error(err.response?.data?.message || "تعذر تحميل المحادثات");
+      if (reqId === convReqRef.current) toast.error(err.response?.data?.message || t.conversationsError);
     } finally {
       if (reqId === convReqRef.current) { setConvsLoading(false); setConvsLoadingMore(false); }
     }
-  }, [selectedNumberId]);
+  }, [selectedNumberId, selectedNumber, t]);
 
   useEffect(() => {
     setSelectedConv(null);
@@ -184,7 +219,7 @@ export default function WhatsAppChatPage() {
 
   // ── 3. Messages (page 1 = الأحدث، الصفحات بعدها أقدم) ────────────────────────
   const loadMessages = useCallback(async (page = 1) => {
-    if (!selectedNumberId || !selectedPhone) return;
+    if (!selectedNumberId || !selectedNumberCanChat || !selectedPhone) return;
     const reqId = ++msgReqRef.current;
     if (page === 1) setMsgsLoading(true); else setMsgsLoadingMore(true);
     try {
@@ -202,11 +237,11 @@ export default function WhatsAppChatPage() {
       setMsgPage(page);
       setMsgHasMore((r.data?.data ?? []).length >= MSGS_PER_PAGE);
     } catch (err) {
-      if (reqId === msgReqRef.current) toast.error(err.response?.data?.message || "تعذر تحميل الرسائل");
+      if (reqId === msgReqRef.current) toast.error(err.response?.data?.message || t.messagesError);
     } finally {
       if (reqId === msgReqRef.current) { setMsgsLoading(false); setMsgsLoadingMore(false); }
     }
-  }, [selectedNumberId, selectedPhone]);
+  }, [selectedNumberId, selectedNumberCanChat, selectedPhone, t]);
 
   useEffect(() => {
     setMessages([]);
@@ -244,7 +279,7 @@ export default function WhatsAppChatPage() {
 
   // ── 4. Real-time Echo / Reverb ──────────────────────────────────────────────
   useEffect(() => {
-    if (!selectedNumberId || !selectedPhone) return;
+    if (!selectedNumberId || !selectedNumberCanChat || !selectedPhone) return;
     const echo = getEcho();
     const channelName = `userWhats_${selectedPhone}_${selectedNumberId}`;
 
@@ -266,7 +301,7 @@ export default function WhatsAppChatPage() {
     });
 
     return () => echo.leave(channelName);
-  }, [selectedNumberId, selectedPhone, bumpConversation]);
+  }, [selectedNumberId, selectedNumberCanChat, selectedPhone, bumpConversation]);
 
   // ── فتح محادثة ──────────────────────────────────────────────────────────────
   const handleSelectConv = (conv) => {
@@ -280,7 +315,7 @@ export default function WhatsAppChatPage() {
   // ── 5. Send Message (usePost) ───────────────────────────────────────────────
   const handleSend = async () => {
     const text = messageText.trim();
-    if (!text || !selectedNumberId || !selectedPhone || sending) return;
+    if (!text || !selectedNumberId || !selectedNumberCanChat || !selectedPhone || sending) return;
 
     const optimistic = {
       id: `opt_${Date.now()}`,
@@ -328,28 +363,28 @@ export default function WhatsAppChatPage() {
   // ─── Group messages by date ───────────────────────────────────────────────
   const groupedMessages = messages.reduce((acc, msg) => {
     const date = msg.created_at
-      ? new Date(msg.created_at).toLocaleDateString("ar-EG", { weekday: "long", day: "numeric", month: "long" })
-      : "اليوم";
+      ? new Date(msg.created_at).toLocaleDateString(locale, { weekday: "long", day: "numeric", month: "long" })
+      : t.today;
     if (!acc[date]) acc[date] = [];
     acc[date].push(msg);
     return acc;
   }, {});
 
   return (
-    <div style={{ display: "flex", height: "100vh", background: WA.bg, fontFamily: "'Segoe UI',Tahoma,Arial,sans-serif", direction: "rtl", overflow: "hidden" }}>
+    <div style={{ display: "flex", height: "100vh", background: WA.bg, fontFamily: "'Segoe UI',Tahoma,Arial,sans-serif", direction: isRTL ? "rtl" : "ltr", overflow: "hidden" }}>
 
       {/* ── Sidebar ────────────────────────────────────────────── */}
       <aside style={{ width: 380, background: WA.sidebar, display: "flex", flexDirection: "column", borderLeft: `1px solid ${WA.border}`, flexShrink: 0 }}>
 
         {/* Header */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 16px", background: WA.header }}>
-          <WaAvatar name="أنا" size={40} />
+          <WaAvatar name={t.me} size={40} />
           <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
             <WaLogo size={26} />
             <span style={{ color: WA.text, fontWeight: 700, fontSize: 18 }}>WhatsApp</span>
           </div>
           <div style={{ display: "flex", gap: 6 }}>
-            <button style={waBtn} onClick={() => loadConversations(1)} title="تحديث">
+            <button style={waBtn} onClick={() => loadConversations(1)} disabled={!selectedNumberCanChat} title={t.refresh} aria-label={t.refresh}>
               <RefreshCw size={18} color={WA.textMuted} />
             </button>
             <button style={waBtn}><MoreVertical size={18} color={WA.textMuted} /></button>
@@ -365,8 +400,8 @@ export default function WhatsAppChatPage() {
               onChange={(e) => setSelectedNumberId(Number(e.target.value))}
             >
               {numbers.map((n) => (
-                <option key={n.id} value={n.id}>
-                  {n.phone}
+                <option key={n.id} value={n.id} disabled={!hasChatAccess(n)}>
+                  {n.phone} · {localizeApiLabel(n.subscription_status, lang, t.noSubscription)} · {formatAvailableMessages(n.available_msgs)}
                 </option>
               ))}
             </select>
@@ -379,7 +414,7 @@ export default function WhatsAppChatPage() {
             <Search size={16} color={WA.textMuted} />
             <input
               style={{ background: "transparent", border: "none", outline: "none", color: WA.text, fontSize: 14, flex: 1, textAlign: "right" }}
-              placeholder="ابحث برقم الهاتف أو الاسم..."
+              placeholder={t.search}
               value={convSearch}
               onChange={(e) => setConvSearch(e.target.value)}
             />
@@ -392,10 +427,19 @@ export default function WhatsAppChatPage() {
             <div style={{ display: "flex", justifyContent: "center", padding: 40 }}>
               <Loader2 size={28} color={WA.green} style={{ animation: "spin 1s linear infinite" }} />
             </div>
+          ) : selectedNumber && !selectedNumberCanChat ? (
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: 40, textAlign: "center" }}>
+              <MessageSquare size={40} color={WA.textMuted} />
+              <p style={{ color: WA.text, marginTop: 10, fontSize: 13 }}>{t.subscriptionRequired}</p>
+              <p style={{ color: WA.textMuted, marginTop: 5, fontSize: 12 }}>{t.availableMessages(formatAvailableMessages(selectedNumber.available_msgs))}</p>
+              <button type="button" onClick={() => navigate("/whatsapp")} style={{ ...waBtn, marginTop: 12, color: WA.green, fontWeight: 700 }}>
+                {t.subscribe}
+              </button>
+            </div>
           ) : filteredConvs.length === 0 ? (
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: 40 }}>
               <MessageSquare size={40} color={WA.textMuted} />
-              <p style={{ color: WA.textMuted, marginTop: 8, fontSize: 13 }}>لا توجد محادثات</p>
+              <p style={{ color: WA.textMuted, marginTop: 8, fontSize: 13 }}>{t.noConversations}</p>
             </div>
           ) : filteredConvs.map((conv) => (
             <motion.div
@@ -416,7 +460,7 @@ export default function WhatsAppChatPage() {
                     {conv.name || conv.phone}
                   </span>
                   <span style={{ color: conv.unread_count > 0 ? WA.green : WA.textMuted, fontSize: 11, flexShrink: 0 }}>
-                    {fmt(conv.last_message_at)}
+                    {fmt(conv.last_message_at, t, locale)}
                   </span>
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 3 }}>
@@ -439,7 +483,7 @@ export default function WhatsAppChatPage() {
               disabled={convsLoadingMore}
               style={{ ...waBtn, width: "100%", borderRadius: 0, padding: 12, color: WA.green, fontSize: 13 }}
             >
-              {convsLoadingMore ? <Loader2 size={18} color={WA.green} style={{ animation: "spin 1s linear infinite" }} /> : "تحميل المزيد"}
+              {convsLoadingMore ? <Loader2 size={18} color={WA.green} style={{ animation: "spin 1s linear infinite" }} /> : t.moreConversations}
             </button>
           )}
         </div>
@@ -461,10 +505,20 @@ export default function WhatsAppChatPage() {
                 <WaLogo size={54} />
               </div>
               <h2 style={{ color: WA.text, marginTop: 24, fontSize: 22, fontWeight: 700 }}>WhatsApp Business</h2>
-              <p style={{ color: WA.textMuted, marginTop: 10, fontSize: 14 }}>اختر محادثة للبدء</p>
+              <p style={{ color: WA.textMuted, marginTop: 10, fontSize: 14 }}>
+                {selectedNumber && !selectedNumberCanChat ? t.subscriptionRequired : t.chooseConversation}
+              </p>
+              {selectedNumber && !selectedNumberCanChat && (
+                <>
+                  <p style={{ color: WA.textMuted, marginTop: 6, fontSize: 12 }}>{t.availableMessages(formatAvailableMessages(selectedNumber.available_msgs))}</p>
+                  <button type="button" onClick={() => navigate("/whatsapp")} style={{ ...waBtn, marginTop: 12, color: WA.green, fontWeight: 700 }}>
+                    {t.subscribe}
+                  </button>
+                </>
+              )}
               <div style={{ height: 1, background: WA.border, margin: "24px auto", width: 200 }} />
               <p style={{ color: WA.textMuted, fontSize: 12 }}>
-                🔒 رسائلك مشفرة بالكامل
+                🔒 {t.encrypted}
               </p>
             </motion.div>
           </div>
@@ -474,9 +528,9 @@ export default function WhatsAppChatPage() {
             <div style={{ display: "flex", alignItems: "center", padding: "10px 16px", background: WA.header, gap: 10, zIndex: 2 }}>
               <button style={waBtn} onClick={() => setSelectedConv(null)}><ChevronLeft size={22} color={WA.textMuted} /></button>
               <WaAvatar name={selectedConv.name || selectedConv.phone || "?"} size={40} />
-              <div style={{ flex: 1, marginRight: 8 }}>
+              <div style={{ flex: 1, marginInlineStart: 8 }}>
                 <div style={{ color: WA.text, fontWeight: 700, fontSize: 15 }}>{selectedConv.name || selectedConv.phone}</div>
-                <div style={{ color: WA.green, fontSize: 12 }}>{selectedConv.phone}</div>
+                <div style={{ color: WA.green, fontSize: 12 }}>{selectedConv.phone} · {t.online}</div>
               </div>
               <button style={waBtn}><MoreVertical size={18} color={WA.textMuted} /></button>
             </div>
@@ -496,7 +550,7 @@ export default function WhatsAppChatPage() {
                         disabled={msgsLoadingMore}
                         style={{ ...waBtn, borderRadius: 8, padding: "6px 14px", background: "rgba(17,27,33,0.85)", color: WA.green, fontSize: 12 }}
                       >
-                        {msgsLoadingMore ? <Loader2 size={16} color={WA.green} style={{ animation: "spin 1s linear infinite" }} /> : "تحميل رسائل أقدم"}
+                        {msgsLoadingMore ? <Loader2 size={16} color={WA.green} style={{ animation: "spin 1s linear infinite" }} /> : t.olderMessages}
                       </button>
                     </div>
                   )}
@@ -550,7 +604,7 @@ export default function WhatsAppChatPage() {
 
                                 {/* Time + ticks */}
                                 <div style={{ display: "flex", alignItems: "center", gap: 3, justifyContent: "flex-end", marginTop: 3 }}>
-                                  <span style={{ color: WA.textMuted, fontSize: 10 }}>{msgTime(msg.created_at)}</span>
+                                  <span style={{ color: WA.textMuted, fontSize: 10 }}>{msgTime(msg.created_at, locale)}</span>
                                   {isAdmin && (msg.is_read
                                     ? <CheckCheck size={14} color="#53bdeb" />
                                     : <Check size={14} color={WA.textMuted} />
@@ -575,8 +629,8 @@ export default function WhatsAppChatPage() {
               <div style={{ flex: 1, background: WA.searchInput, borderRadius: 24, display: "flex", alignItems: "center", padding: "0 14px" }}>
                 <input
                   ref={inputRef}
-                  style={{ width: "100%", background: "transparent", border: "none", outline: "none", color: WA.text, fontSize: 14, padding: "10px 0", textAlign: "right" }}
-                  placeholder="اكتب رسالة..."
+                  style={{ width: "100%", background: "transparent", border: "none", outline: "none", color: WA.text, fontSize: 14, padding: "10px 0", textAlign: isRTL ? "right" : "left" }}
+                  placeholder={t.messagePlaceholder}
                   value={messageText}
                   onChange={(e) => setMessageText(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSend()}

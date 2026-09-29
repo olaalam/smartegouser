@@ -8,6 +8,10 @@ import ProfilePage        from "./pages/ProfilePage";
 import WhatsAppPage       from "./pages/WhatsAppWizard";
 import MessengerChatPage  from "./pages/MessengerChatPage";
 import WhatsAppChatPage   from "./pages/WhatsAppChatPage";
+import FacebookPagesPage from "./pages/FacebookPagesPage";
+import FacebookPageManagePage from "./pages/FacebookPageManagePage";
+import AppLayout from "./components/layout/AppLayout";
+import UserOrdersPage from "./pages/UserOrdersPage";
 
 // ─── Route guards ─────────────────────────────────────────────────────────────
 
@@ -42,22 +46,37 @@ export default function App() {
 
         <Route
           path="/dashboard"
-          element={<PrivateRoute><DashboardPage /></PrivateRoute>}
+          element={<PrivateRoute><AppLayout><DashboardPage /></AppLayout></PrivateRoute>}
         />
 
         <Route
           path="/order"
-          element={<PrivateRoute><OrderPage /></PrivateRoute>}
+          element={<PrivateRoute><AppLayout><OrderPage /></AppLayout></PrivateRoute>}
+        />
+
+        <Route
+          path="/user-orders"
+          element={<PrivateRoute><AppLayout><UserOrdersPage /></AppLayout></PrivateRoute>}
+        />
+
+        <Route
+          path="/fb-pages"
+          element={<PrivateRoute><AppLayout><FacebookPagesPage /></AppLayout></PrivateRoute>}
+        />
+
+        <Route
+          path="/fb-pages/:pageId/manage"
+          element={<PrivateRoute><AppLayout><FacebookPageManagePage /></AppLayout></PrivateRoute>}
         />
 
         <Route
           path="/profile"
-          element={<PrivateRoute><ProfilePage /></PrivateRoute>}
+          element={<PrivateRoute><AppLayout><ProfilePage /></AppLayout></PrivateRoute>}
         />
 
         <Route
           path="/whatsapp"
-          element={<PrivateRoute><WhatsAppPage /></PrivateRoute>}
+          element={<PrivateRoute><AppLayout><WhatsAppPage /></AppLayout></PrivateRoute>}
         />
 
         <Route

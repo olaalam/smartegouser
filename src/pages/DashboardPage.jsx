@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { useGet } from "../hooks/useGet";
 import { API_ENDPOINTS } from "../utils/constants";
+import { localizeApiLabel } from "../utils/localization";
 import Navbar from "../components/layout/Navbar";
 import Loader from "../components/common/Loader";
 
@@ -213,7 +214,7 @@ export default function DashboardPage() {
 
   const d = data?.data;
   const phoneStatus   = d?.overview?.phone_status;
-  const isPhoneActive = phoneStatus?.toLowerCase() === "active";
+  const isPhoneActive = ["active", "connected"].includes(phoneStatus?.toLowerCase());
 
   const handleDraftChange = (key, val) => setDraft((p) => ({ ...p, [key]: val }));
 
@@ -264,7 +265,7 @@ export default function DashboardPage() {
         <motion.div {...fadeUp(0)} className="flex items-start justify-between gap-4 flex-wrap">
           <div>
             <h1 className="text-2xl font-bold text-[var(--foreground)] leading-tight">
-              {t.welcome(user?.name ?? "User")}
+              {t.welcome(user?.name ?? (lang === "ar" ? "مستخدم" : "User"))}
             </h1>
             <p className="text-sm text-[var(--muted-foreground)] mt-1">
               {d?.overview?.restaurant_name ? t.managing(d.overview.restaurant_name) : t.overview}
@@ -397,7 +398,7 @@ export default function DashboardPage() {
               <InfoRow label={t.waStatus}>
                 <span className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full ${isPhoneActive ? "bg-green-100 text-green-700" : "bg-[var(--muted)] text-[var(--muted-foreground)]"}`}>
                   {isPhoneActive ? <CheckCircle2 className="w-3.5 h-3.5" aria-hidden="true" /> : <XCircle className="w-3.5 h-3.5" aria-hidden="true" />}
-                  {phoneStatus ?? t.notConnected}
+                  {localizeApiLabel(phoneStatus, lang, t.notConnected)}
                 </span>
               </InfoRow>
             </div>
@@ -416,7 +417,7 @@ export default function DashboardPage() {
               <InfoRow label={t.phone}>{user?.phone}</InfoRow>
               <InfoRow label={t.role}>
                 <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[var(--accent)] text-[var(--primary)] capitalize">
-                  {user?.role ?? "—"}
+                  {localizeApiLabel(user?.role, lang)}
                 </span>
               </InfoRow>
             </div>

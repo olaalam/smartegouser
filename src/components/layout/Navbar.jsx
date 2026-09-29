@@ -36,7 +36,9 @@ export default function Navbar() {
     setMenuOpen(false);
     const result = await execute(API_ENDPOINTS.AUTH.LOGOUT, {});
     toast[result.success ? "success" : "info"](
-      result.success ? "Logged out successfully." : "Session ended."
+      result.success
+        ? (lang === "ar" ? "تم تسجيل الخروج بنجاح." : "Logged out successfully.")
+        : (lang === "ar" ? "انتهت الجلسة." : "Session ended.")
     );
     dispatch(logout());
     navigate("/login", { replace: true });
@@ -69,7 +71,7 @@ export default function Navbar() {
                   text-[var(--muted-foreground)] hover:text-[var(--foreground)]
                   hover:bg-[var(--muted)] transition-colors duration-150
                   focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]"
-                aria-label="Go back"
+                aria-label={lang === "ar" ? "رجوع" : "Go back"}
               >
                 <BackIcon className="w-4 h-4" aria-hidden="true" />
               </motion.button>
@@ -111,7 +113,9 @@ export default function Navbar() {
                     : "text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
                   }`}
                 aria-pressed={lang === l}
-                aria-label={`Switch to ${l === "en" ? "English" : "Arabic"}`}
+                aria-label={lang === "ar"
+                  ? (l === "en" ? "التبديل إلى الإنجليزية" : "التبديل إلى العربية")
+                  : `Switch to ${l === "en" ? "English" : "Arabic"}`}
               >
                 {l.toUpperCase()}
               </button>
@@ -163,7 +167,7 @@ export default function Navbar() {
                 {initials}
               </div>
               <span className="text-sm font-medium text-[var(--foreground)] hidden sm:block max-w-[120px] truncate">
-                {user?.name ?? "User"}
+                {user?.name ?? (lang === "ar" ? "مستخدم" : "User")}
               </span>
               <ChevronDown
                 className={`w-3.5 h-3.5 text-[var(--muted-foreground)] transition-transform duration-200 ${
@@ -190,7 +194,7 @@ export default function Navbar() {
                     {/* User info */}
                     <div className="px-4 py-3 border-b border-[var(--border)]">
                       <p className="text-xs font-semibold text-[var(--foreground)] truncate">
-                        {user?.name ?? "User"}
+                        {user?.name ?? (lang === "ar" ? "مستخدم" : "User")}
                       </p>
                       <p className="text-xs text-[var(--muted-foreground)] truncate mt-0.5">
                         {user?.email ?? user?.phone ?? "—"}

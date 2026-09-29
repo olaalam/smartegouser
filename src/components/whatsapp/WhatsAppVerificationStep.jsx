@@ -95,7 +95,7 @@ export default function WhatsAppVerificationStep({ items, loading, error, refetc
                 const cooldown = remainingSeconds(item.id);
                 const isRequestedItem = visibleRequestedId === item.id;
                 const requestLabel = isRequestedItem
-                  ? (cooldown > 0 ? `${t.resendIn ?? "Resend in"} ${cooldown}s` : t.resendCode)
+                  ? (cooldown > 0 ? `${t.resendIn} ${cooldown}s` : t.resendCode)
                   : t.requestCode;
                 return (
                   <article key={item.id} className="space-y-4 py-5">

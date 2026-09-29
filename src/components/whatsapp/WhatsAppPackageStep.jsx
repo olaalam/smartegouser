@@ -97,7 +97,7 @@ export default function WhatsAppPackageStep({ items, lang, t }) {
                     </div>
                     {hasDiscount && (
                       <span className="w-fit rounded-full bg-green-100 px-2 py-0.5 text-[11px] font-medium text-green-700">
-                        {pkg.discount.name || t.discount || "Discount"}
+                        {pkg.discount.name?.[lang] ?? pkg.discount.name ?? t.discount}
                       </span>
                     )}
                   </button>

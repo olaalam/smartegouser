@@ -29,3 +29,6 @@ export const sendWhatsAppMessage = (body) =>
 // Body: { channel: "whatsapp", whats_item_id, phone }
 export const markWhatsAppRead = (body) =>
   axiosInstance.post("user/chat/mark-as-read", { channel: "whatsapp", ...body });
+
+export const getWhatsAppAIData = (id) =>
+  axiosInstance.get(`user/whats/ai_data/${encodeURIComponent(id)}`);

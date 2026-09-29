@@ -221,7 +221,7 @@ export default function WhatsAppNumbersStep({ items, loading, error, refetch, la
                 )}
 
                 <div className="space-y-3 border-t border-[var(--border)] pt-5">
-                  <p className={sectionHeadingClass}>{t.linksHeading ?? "App & website links"}</p>
+                  <p className={sectionHeadingClass}>{t.linksHeading}</p>
                   <div className="grid gap-3 sm:grid-cols-2">
                     <label className="space-y-1.5 text-sm font-medium text-[var(--foreground)]">
                       <span>{t.androidLink}</span>
@@ -242,7 +242,7 @@ export default function WhatsAppNumbersStep({ items, loading, error, refetch, la
                 </div>
 
                 <div className="space-y-3 border-t border-[var(--border)] pt-5">
-                  <p className={sectionHeadingClass}>{t.aiHeading ?? "AI assistant"}</p>
+                  <p className={sectionHeadingClass}>{t.aiHeading}</p>
                   <label className="block space-y-1.5 text-sm font-medium text-[var(--foreground)]">
                     <span>{t.aiContext}</span>
                     <textarea className={`${inputClass} min-h-24 resize-y`} value={form.ai_context}
@@ -250,7 +250,7 @@ export default function WhatsAppNumbersStep({ items, loading, error, refetch, la
                   </label>
                   {!editingId ? (
                     <FileField label={t.aiFile} fileName={form.ai_file?.name}
-                      chooseLabel={t.chooseFile ?? "Choose file"} emptyLabel={t.noFileChosen ?? "No file chosen"}
+                      chooseLabel={t.chooseFile} emptyLabel={t.noFileChosen}
                       onChange={(event) => setForm((current) => ({ ...current, ai_file: event.target.files?.[0] ?? null }))} />
                   ) : (
                     <label className="block space-y-1.5 text-sm font-medium text-[var(--foreground)]">
@@ -263,7 +263,7 @@ export default function WhatsAppNumbersStep({ items, loading, error, refetch, la
 
                 {!editingId && (
                   <div className="space-y-3 border-t border-[var(--border)] pt-5">
-                    <p className={sectionHeadingClass}>{t.verificationHeading ?? "Verification"}</p>
+                    <p className={sectionHeadingClass}>{t.verificationHeading}</p>
                     <label className="space-y-1.5 text-sm font-medium text-[var(--foreground)]">
                       <span>{t.codeMethod}</span>
                       <CodeMethodControl value={form.code_method} t={t}
@@ -273,7 +273,7 @@ export default function WhatsAppNumbersStep({ items, loading, error, refetch, la
                       <div>
                         <p className="text-sm font-medium text-[var(--foreground)]">{t.autoRequest}</p>
                         <p className="mt-0.5 text-xs text-[var(--muted-foreground)]">
-                          {t.autoRequestHint ?? "We'll send the verification code right after this number is added."}
+                          {t.autoRequestHint}
                         </p>
                       </div>
                       <input type="checkbox" className="mt-1 h-5 w-5 shrink-0 accent-[var(--primary)]" checked={form.auto_request_code}

@@ -7,6 +7,7 @@ import Navbar     from "../components/layout/Navbar";
 import Loader     from "../components/common/Loader";
 import Badge      from "../components/ui/Badge";
 import EmptyState from "../components/ui/EmptyState";
+import { localizeApiLabel } from "../utils/localization";
 
 // ─── Translations ─────────────────────────────────────────────────────────────
 
@@ -128,7 +129,7 @@ export default function ProfilePage() {
               <p className="text-sm text-[var(--muted-foreground)] mt-0.5">{restaurant}</p>
             )}
             <div className="mt-1.5">
-              <Badge variant="default" className="capitalize">{u?.role ?? "—"}</Badge>
+              <Badge variant="default" className="capitalize">{localizeApiLabel(u?.role, lang)}</Badge>
             </div>
           </div>
         </motion.div>
@@ -152,7 +153,7 @@ export default function ProfilePage() {
             <Row icon={Phone}  label={t.phone}      value={u?.phone   ?? t.notSet}        />
             <Row icon={Store}  label={t.restaurant} value={restaurant ?? t.notSet}        />
             <Row icon={Shield} label={t.role}       value={
-              <Badge variant="default" className="capitalize">{u?.role ?? "—"}</Badge>
+              <Badge variant="default" className="capitalize">{localizeApiLabel(u?.role, lang)}</Badge>
             } />
           </div>
         </motion.div>

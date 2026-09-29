@@ -19,3 +19,6 @@ export const sendMessengerMessage = (body) =>
 // ── 5. Mark conversation as read ─────────────────────────────────────────────
 export const markMessengerRead = (body) =>
   axiosInstance.post("user/chat/mark-as-read", { channel: "messenger", ...body });
+
+export const getMessengerAIData = (pageId) =>
+  axiosInstance.post("user/messenger/ai_data", { page_id: pageId });
