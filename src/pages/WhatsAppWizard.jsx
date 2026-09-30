@@ -2,6 +2,7 @@ import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowLeft, ArrowRight, MessageCircle } from "lucide-react";
 import { useSelector } from "react-redux";
+import { useSearchParams } from "react-router-dom";
 import { useGet } from "../hooks/useGet";
 import { API_ENDPOINTS } from "../utils/constants";
 import Navbar from "../components/layout/Navbar";
@@ -35,14 +36,17 @@ function StepNavigation({ step, setStep, canContinue, isRTL, t }) {
 }
 
 export default function WhatsAppWizard() {
+  const [searchParams] = useSearchParams();
   const lang = useSelector((state) => state.ui.lang);
   const t = T[lang] ?? T.en;
   const isRTL = lang === "ar";
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState(null);
   const [autoRequestPhone, setAutoRequestPhone] = useState("");
   const { data, loading, error, refetch } = useGet(API_ENDPOINTS.WHATSAPP.ITEMS);
   const items = data?.data ?? [];
   const hasVerifiedNumber = items.some((item) => Boolean(item.phone_verified_at));
+  const requestedPackageStep = searchParams.get("step") === "package";
+  const currentStep = step ?? (requestedPackageStep && hasVerifiedNumber ? 3 : 1);
   const steps = [t.steps.numbers, t.steps.verification, t.steps.package];
   const handleCreated = (phone, autoRequestCode) => {
     setAutoRequestPhone(autoRequestCode ? phone : "");
@@ -64,19 +68,19 @@ export default function WhatsAppWizard() {
         </header>
 
         <div className="rounded-2xl border border-[var(--border)] bg-[var(--card)] p-5 shadow-sm sm:p-7">
-          <WhatsAppStepBar current={step} steps={steps} />
+          <WhatsAppStepBar current={currentStep} steps={steps} />
 
           <div className="mt-7">
             <AnimatePresence mode="wait">
-              <motion.section key={step} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
+              <motion.section key={currentStep} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.2 }} className="space-y-5">
-                {step === 1 && <WhatsAppNumbersStep items={items} loading={loading} error={error} refetch={refetch}
+                {currentStep === 1 && <WhatsAppNumbersStep items={items} loading={loading} error={error} refetch={refetch}
                   lang={lang} isRTL={isRTL} t={t.numbers} onCreated={handleCreated} />}
-                {step === 2 && <WhatsAppVerificationStep items={items} loading={loading} error={error} refetch={refetch}
+                {currentStep === 2 && <WhatsAppVerificationStep items={items} loading={loading} error={error} refetch={refetch}
                   lang={lang} t={t.verification} autoRequestPhone={autoRequestPhone} />}
-                {step === 3 && <WhatsAppPackageStep items={items} lang={lang} t={t.package} />}
-                <StepNavigation step={step} setStep={setStep}
-                  canContinue={step === 1 ? items.length > 0 : hasVerifiedNumber}
+                {currentStep === 3 && <WhatsAppPackageStep items={items} lang={lang} t={t.package} />}
+                <StepNavigation step={currentStep} setStep={setStep}
+                  canContinue={currentStep === 1 ? items.length > 0 : hasVerifiedNumber}
                   isRTL={isRTL} t={t.common} />
               </motion.section>
             </AnimatePresence>

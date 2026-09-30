@@ -14,7 +14,15 @@ export const usePost = () => {
       const response = await axiosInstance.post(url, payload, config);
       return { success: true, data: response.data };
     } catch (err) {
-      const message = err.response?.data?.message || (lang === "ar" ? "فشلت عملية الإرسال" : "The request could not be sent.");
+      // التحقق من كافة المفاتيح المحتملة لرسالة الخطأ في استجابة السيرفر
+      const errorData = err.response?.data;
+      const message = 
+        errorData?.message || 
+        errorData?.error || 
+        errorData?.msg || 
+        err.message || 
+        (lang === "ar" ? "فشلت عملية الإرسال" : "The request could not be sent.");
+
       setError(message);
       return { success: false, error: message };
     } finally {

@@ -8,6 +8,9 @@ import ProfilePage        from "./pages/ProfilePage";
 import WhatsAppPage       from "./pages/WhatsAppWizard";
 import MessengerChatPage  from "./pages/MessengerChatPage";
 import WhatsAppChatPage   from "./pages/WhatsAppChatPage";
+import InstagramChatPage from "./pages/InstagramChatPage";
+import InstagramSubscriptionPage from "./pages/InstagramSubscriptionPage";
+import ConnectManagerPage from "./pages/ConnectManagerPage";
 import FacebookPagesPage from "./pages/FacebookPagesPage";
 import FacebookPageManagePage from "./pages/FacebookPageManagePage";
 import AppLayout from "./components/layout/AppLayout";
@@ -50,6 +53,11 @@ export default function App() {
         />
 
         <Route
+          path="/connect"
+          element={<PrivateRoute><AppLayout><ConnectManagerPage /></AppLayout></PrivateRoute>}
+        />
+
+        <Route
           path="/order"
           element={<PrivateRoute><AppLayout><OrderPage /></AppLayout></PrivateRoute>}
         />
@@ -87,6 +95,16 @@ export default function App() {
         <Route
           path="/whatsapp-chat"
           element={<PrivateRoute><WhatsAppChatPage /></PrivateRoute>}
+        />
+
+        <Route
+          path="/instagram-chat"
+          element={<PrivateRoute><InstagramChatPage /></PrivateRoute>}
+        />
+
+        <Route
+          path="/instagram-subscription"
+          element={<PrivateRoute><AppLayout><InstagramSubscriptionPage /></AppLayout></PrivateRoute>}
         />
 
         <Route path="*" element={<Navigate to="/login" replace />} />

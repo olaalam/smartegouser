@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import { useSelector } from "react-redux";
-import { ChevronLeft, ChevronRight, ClipboardList, CreditCard, LayoutDashboard } from "lucide-react";
+import { Camera, ChevronLeft, ChevronRight, ClipboardList, CreditCard, LayoutDashboard, Link2 } from "lucide-react";
 
 function FacebookMark() {
   return (
@@ -15,7 +15,10 @@ function FacebookMark() {
 
 const navigation = [
   { to: "/dashboard", label: { en: "Dashboard", ar: "لوحة التحكم" }, icon: LayoutDashboard },
+  { to: "/connect", label: { en: "Connect accounts", ar: "ربط الحسابات" }, icon: Link2 },
   { to: "/fb-pages", label: { en: "FB Pages", ar: "صفحات فيسبوك" }, icon: FacebookMark },
+  { to: "/instagram-chat", label: { en: "Instagram inbox", ar: "رسائل Instagram" }, icon: Camera },
+  { to: "/instagram-subscription", label: { en: "Instagram plans", ar: "باقات Instagram" }, icon: CreditCard },
   { to: "/order", label: { en: "Subscription", ar: "الاشتراك" }, icon: CreditCard },
   { to: "/user-orders", label: { en: "User Orders", ar: "طلبات المستخدم" }, icon: ClipboardList },
 ];
