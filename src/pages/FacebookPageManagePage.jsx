@@ -5,7 +5,6 @@ import { PanelsTopLeft, MessageCircle, MessageSquare, ArrowUpRight, CreditCard, 
 import { useGet } from "../hooks/useGet";
 import { API_ENDPOINTS } from "../utils/constants";
 import { useMinimumLoading } from "../hooks/useMinimumLoading";
-import Navbar from "../components/layout/Navbar";
 import Loader from "../components/common/Loader";
 import EmptyState from "../components/ui/EmptyState";
 import AISettingsPanel from "../components/messenger/AISettingsPanel";
@@ -61,7 +60,6 @@ export default function FacebookPageManagePage() {
 
   return (
     <div className="min-h-screen bg-[var(--background)]">
-      <Navbar />
       <main className="mx-auto max-w-6xl px-4 py-8 lg:px-8">
         {showLoader ? <div className="grid min-h-[320px] place-items-center border-y border-[var(--border)] bg-[var(--card)]"><Loader text={t.loading} /></div>
           : error ? (

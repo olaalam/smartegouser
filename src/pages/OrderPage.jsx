@@ -11,7 +11,6 @@ import {
 import { useGet }  from "../hooks/useGet";
 import { usePost } from "../hooks/usePost";
 import { API_ENDPOINTS } from "../utils/constants";
-import Navbar      from "../components/layout/Navbar";
 import Loader      from "../components/common/Loader";
 import SectionCard from "../components/ui/SectionCard";
 import EmptyState  from "../components/ui/EmptyState";
@@ -163,7 +162,6 @@ export default function OrderPage() {
   if (pkgsLoading && pagesLoading) {
     return (
       <div className="min-h-screen bg-[var(--background)]">
-        <Navbar />
         <Loader fullScreen text={t.loading} />
       </div>
     );
@@ -176,8 +174,6 @@ export default function OrderPage() {
   return (
     <div className="min-h-screen bg-[var(--background)]"
       style={{ backgroundImage: "radial-gradient(ellipse 100% 40% at 50% 0%, oklch(0.88 0.12 138 / 15%), transparent)" }}>
-      <Navbar />
-
       <main className="max-w-3xl mx-auto px-4 py-8 space-y-8">
 
         {/* Header */}

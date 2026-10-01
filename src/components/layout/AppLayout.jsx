@@ -2,6 +2,7 @@ import { useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { Camera, ChevronLeft, ChevronRight, ClipboardList, CreditCard, LayoutDashboard, Link2 } from "lucide-react";
+import Navbar from "./Navbar";
 
 function FacebookMark() {
   return (
@@ -81,7 +82,10 @@ export default function AppLayout({ children }) {
           })}
         </nav>
       </aside>
-      <div className="min-w-0 flex-1">{children}</div>
+      <div className="min-w-0 flex-1">
+        <Navbar />
+        {children}
+      </div>
     </div>
   );
 }

@@ -6,7 +6,6 @@ import { useGet } from "../hooks/useGet";
 import { API_ENDPOINTS } from "../utils/constants";
 import { useMinimumLoading } from "../hooks/useMinimumLoading";
 import { hasChatAccess } from "../utils/chatAccess";
-import Navbar from "../components/layout/Navbar";
 import Loader from "../components/common/Loader";
 import EmptyState from "../components/ui/EmptyState";
 
@@ -68,7 +67,6 @@ export default function FacebookPagesPage() {
 
   return (
     <div className="min-h-screen bg-[var(--background)]">
-      <Navbar />
       <main className="mx-auto max-w-6xl space-y-6 px-4 py-8 lg:px-8">
         <header>
           <h1 className="text-2xl font-bold text-[var(--foreground)]">{t.title}</h1>

@@ -4,7 +4,7 @@ import { useSelector } from "react-redux";
 import { Link2 } from "lucide-react";
 
 // App ID الخاص بفيسبوك
-const FB_APP_ID = "442822608459278";
+const FB_APP_ID = import.meta.env.VITE_FB_APP_ID || "1522838669646043";
 
 // شعار فيسبوك الرسمي (SVG)
 const FacebookIcon = (props) => (

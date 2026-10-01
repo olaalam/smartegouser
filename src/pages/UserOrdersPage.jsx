@@ -4,7 +4,6 @@ import { CalendarDays, ChevronLeft, ChevronRight, CreditCard, MessageCircle, Mes
 import { useGet } from "../hooks/useGet";
 import { useMinimumLoading } from "../hooks/useMinimumLoading";
 import { API_ENDPOINTS } from "../utils/constants";
-import Navbar from "../components/layout/Navbar";
 import Loader from "../components/common/Loader";
 import EmptyState from "../components/ui/EmptyState";
 
@@ -171,7 +170,6 @@ export default function UserOrdersPage() {
 
   return (
     <div className="min-h-screen bg-[var(--background)]">
-      <Navbar />
       <main className="mx-auto max-w-6xl space-y-6 px-4 py-8 lg:px-8">
         <header>
           <h1 className="text-2xl font-bold text-[var(--foreground)]">{t.title}</h1>

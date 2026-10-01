@@ -3,7 +3,6 @@ import { motion } from "framer-motion";
 import { User, Mail, Phone, Store, Shield, Hash, RefreshCw } from "lucide-react";
 import { useGet } from "../hooks/useGet";
 import { API_ENDPOINTS } from "../utils/constants";
-import Navbar     from "../components/layout/Navbar";
 import Loader     from "../components/common/Loader";
 import Badge      from "../components/ui/Badge";
 import EmptyState from "../components/ui/EmptyState";
@@ -69,7 +68,6 @@ export default function ProfilePage() {
   if (loading && !u) {
     return (
       <div className="min-h-screen bg-[var(--background)]">
-        <Navbar />
         <Loader fullScreen text={t.loading} />
       </div>
     );
@@ -78,7 +76,6 @@ export default function ProfilePage() {
   if (error && !u) {
     return (
       <div className="min-h-screen bg-[var(--background)]">
-        <Navbar />
         <div className="flex items-center justify-center min-h-[60vh]">
           <EmptyState icon={User} title={t.errorTitle} description={error}
             action={
@@ -100,8 +97,6 @@ export default function ProfilePage() {
   return (
     <div className="min-h-screen bg-[var(--background)]"
       style={{ backgroundImage: "radial-gradient(ellipse 80% 40% at 50% 0%, oklch(0.88 0.12 138 / 18%), transparent)" }}>
-      <Navbar />
-
       <main className="max-w-lg mx-auto px-4 py-10 space-y-5">
 
         {/* ── Avatar + name ── */}

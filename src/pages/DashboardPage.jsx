@@ -20,7 +20,6 @@ import {
 import { useGet } from "../hooks/useGet";
 import { API_ENDPOINTS } from "../utils/constants";
 import { localizeApiLabel } from "../utils/localization";
-import Navbar from "../components/layout/Navbar";
 import Loader from "../components/common/Loader";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -235,7 +234,6 @@ export default function DashboardPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-[var(--background)]">
-        <Navbar />
         <Loader fullScreen text={t.loading} />
       </div>
     );
@@ -244,7 +242,6 @@ export default function DashboardPage() {
   if (error) {
     return (
       <div className="min-h-screen bg-[var(--background)]">
-        <Navbar />
         <div className="flex flex-col items-center justify-center min-h-[60vh] gap-3">
           <p className="text-sm text-[var(--destructive)]">{error}</p>
           <button type="button" onClick={refetch} className="px-4 py-2 rounded-xl text-sm font-medium text-white" style={{ background: "var(--primary)" }}>
@@ -257,8 +254,6 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-[var(--background)]" style={{ backgroundImage: "radial-gradient(ellipse 100% 40% at 50% 0%, oklch(0.88 0.12 138 / 15%), transparent)" }}>
-      <Navbar />
-
       <main className="max-w-5xl mx-auto px-4 py-8 space-y-6">
 
         {/* ── Welcome header ── */}

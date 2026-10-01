@@ -5,7 +5,6 @@ import { useSelector } from "react-redux";
 import { useSearchParams } from "react-router-dom";
 import { useGet } from "../hooks/useGet";
 import { API_ENDPOINTS } from "../utils/constants";
-import Navbar from "../components/layout/Navbar";
 import WhatsAppNumbersStep from "../components/whatsapp/WhatsAppNumbersStep";
 import WhatsAppPackageStep from "../components/whatsapp/WhatsAppPackageStep";
 import WhatsAppStepBar from "../components/whatsapp/WhatsAppStepBar";
@@ -55,7 +54,6 @@ export default function WhatsAppWizard() {
 
   return (
     <div className="min-h-screen bg-[var(--background)]" dir={isRTL ? "rtl" : "ltr"}>
-      <Navbar />
       <main className="mx-auto max-w-4xl space-y-6 px-4 py-8">
         <header className="flex items-start gap-3">
           <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[var(--primary)]/10 text-[var(--primary)]">

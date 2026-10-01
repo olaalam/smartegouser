@@ -89,17 +89,17 @@ export default function App() {
 
         <Route
           path="/messenger-chat"
-          element={<PrivateRoute><MessengerChatPage /></PrivateRoute>}
+          element={<PrivateRoute><AppLayout><MessengerChatPage /></AppLayout></PrivateRoute>}
         />
 
         <Route
           path="/whatsapp-chat"
-          element={<PrivateRoute><WhatsAppChatPage /></PrivateRoute>}
+          element={<PrivateRoute><AppLayout><WhatsAppChatPage /></AppLayout></PrivateRoute>}
         />
 
         <Route
           path="/instagram-chat"
-          element={<PrivateRoute><InstagramChatPage /></PrivateRoute>}
+          element={<PrivateRoute><AppLayout><InstagramChatPage /></AppLayout></PrivateRoute>}
         />
 
         <Route
