@@ -14,17 +14,12 @@ import {
   EyeOff,
   ArrowLeft,
   ShieldCheck,
-  RefreshCw,
-  KeyRound
+  RefreshCw
 } from "lucide-react";
 import { toast } from "sonner";
 import { usePost } from "../hooks/usePost";
 import { setAuth, saveAuthToStorage } from "../redux/slices/authSlice";
 import { API_ENDPOINTS } from "../utils/constants";
-import { initFacebookSDK, loginWithFacebook } from "../utils/facebookAuth";
-// ─── Dev token ────────────────────────────────────────────────────────────────
-const FB_DEV_TOKEN = import.meta.env.VITE_FB_DEV_TOKEN;
-const FB_APP_ID = import.meta.env.VITE_FACEBOOK_APP_ID;
 
 // ─── Translations ─────────────────────────────────────────────────────────────
 const T = {
@@ -42,12 +37,6 @@ const T = {
     passwordPlaceholder: "••••••••",
     btnLogin: "Sign In",
     btnSignup: "Create Account",
-    orFb: "OR CONTINUE WITH",
-    btnFb: "Facebook",
-    btnFbLoading: "Opening Facebook…",
-    btnApiLoading: "Authenticating…",
-    fbHttpsRequired: "Facebook login requires a secure HTTPS connection.",
-    fbAppIdRequired: "Facebook login is not configured. Set VITE_FACEBOOK_APP_ID.",
     agree: "By continuing you agree to our",
     terms: "Terms of Service",
     privacy: "Privacy Policy",
@@ -73,10 +62,6 @@ const T = {
     btnChangePass: "Change Password",
     newPasswordLabel: "New Password",
     blockedMsg: "Too many failed attempts. Try again in 5 minutes.",
-    
-    // Manual Access Token
-    manualAccessTokenPlaceholder: "Enter Facebook Access Token manually...",
-    btnManualLogin: "Login with Token",
   },
   ar: {
     tagline: "أهلاً بك في SmartEgo",
@@ -92,12 +77,6 @@ const T = {
     passwordPlaceholder: "••••••••",
     btnLogin: "دخول",
     btnSignup: "إنشاء حساب",
-    orFb: "أو المتابعة بواسطة",
-    btnFb: "فيسبوك",
-    btnFbLoading: "جاري فتح فيسبوك…",
-    btnApiLoading: "جاري التحقق…",
-    fbHttpsRequired: "تسجيل الدخول عبر فيسبوك يتطلب اتصال HTTPS آمنًا.",
-    fbAppIdRequired: "تسجيل فيسبوك غير مُعدّ. يرجى ضبط VITE_FACEBOOK_APP_ID.",
     agree: "بالمتابعة أنت توافق على",
     terms: "شروط الاستخدام",
     privacy: "سياسة الخصوصية",
@@ -123,20 +102,10 @@ const T = {
     btnChangePass: "تغيير كلمة المرور",
     newPasswordLabel: "كلمة المرور الجديدة",
     blockedMsg: "محاولات خاطئة كثيرة. حاول مرة أخرى بعد 5 دقائق.",
-
-    // Manual Access Token
-    manualAccessTokenPlaceholder: "أدخل Access Token يدويًا...",
-    btnManualLogin: "دخول بالرمز",
   },
 };
 
 // ─── Icons ────────────────────────────────────────────────────────────────────
-const FacebookIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5" aria-hidden="true">
-    <path d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073C0 18.1 4.388 23.094 10.125 24v-8.437H7.078v-3.49h3.047V9.41c0-3.025 1.792-4.697 4.533-4.697 1.312 0 2.686.236 2.686.236v2.97h-1.513c-1.491 0-1.956.93-1.956 1.874v2.25h3.328l-.532 3.49h-2.796V24C19.612 23.094 24 18.1 24 12.073z" />
-  </svg>
-);
-
 const SpinnerIcon = () => (
   <svg className="w-5 h-5 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true">
     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
@@ -156,7 +125,6 @@ export default function LoginPage() {
   const [activeTab, setActiveTab] = useState("login"); 
 
   const [error, setError] = useState(null);
-  const [step, setStep] = useState("idle");
 
   const [showLoginPassword, setShowLoginPassword] = useState(false);
   const [showSignupPassword, setShowSignupPassword] = useState(false);
@@ -168,15 +136,12 @@ export default function LoginPage() {
   const [forgotPassEmail, setForgotPassEmail] = useState("");
   const [resetCode, setResetCode] = useState("");
   const [newPassword, setNewPassword] = useState("");
-  
-  // State for manual Access Token
-  const [manualAccessToken, setManualAccessToken] = useState("");
 
   const [failedCodeAttempts, setFailedCodeAttempts] = useState(0);
   const [isBlocked, setIsBlocked] = useState(false);
   const [blockEndTime, setBlockEndTime] = useState(null);
 
-  const isLoading = loading || step !== "idle";
+  const isLoading = loading;
 
   useEffect(() => {
     let interval;
@@ -315,61 +280,6 @@ export default function LoginPage() {
       setError(msg);
       toast.error(msg);
     }
-  };
-
-  // 7. Facebook Login API Connection
-  const loginWithToken = async (accessToken) => {
-    setStep("api");
-    const fbEndpoint = API_ENDPOINTS?.AUTH?.FACEBOOK || "/auth/facebook";
-    const result = await execute(fbEndpoint, { access_token: accessToken });
-    setStep("idle");
-
-    if (result.success) {
-      const data = result.data?.data ?? result.data ?? {};
-      handleAuthSuccess(data);
-    } else {
-      const msg = result.error || (lang === "ar" ? "فشل تسجيل الدخول بفيسبوك." : "Facebook Login failed.");
-      setError(msg);
-      toast.error(msg);
-    }
-  };
-
-  const handleFacebookLogin = async () => {
-    resetErrors();
-    if (FB_DEV_TOKEN) {
-      await loginWithToken(FB_DEV_TOKEN);
-      return;
-    }
-    if (window.location.protocol !== "https:") {
-      setError(t.fbHttpsRequired);
-      toast.error(t.fbHttpsRequired);
-      return;
-    }
-    if (!FB_APP_ID) {
-      setError(t.fbAppIdRequired);
-      toast.error(t.fbAppIdRequired);
-      return;
-    }
-
-    setStep("fb");
-    try {
-      await initFacebookSDK();
-      const accessToken = await loginWithFacebook();
-      await loginWithToken(accessToken);
-    } catch {
-      setStep("idle");
-      const msg = lang === "ar" ? "تعذر تسجيل الدخول عبر فيسبوك." : "Facebook login failed.";
-      setError(msg);
-      toast.error(msg);
-    }
-  };
-
-  // Handler for manual token submission
-  const handleManualTokenSubmit = async (e) => {
-    e.preventDefault();
-    if (!manualAccessToken.trim()) return;
-    resetErrors();
-    await loginWithToken(manualAccessToken.trim());
   };
 
   return (
@@ -552,51 +462,6 @@ export default function LoginPage() {
                     </button>
                   </form>
                 )}
-
-                <div className="relative my-5">
-                  <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-[var(--border)]" />
-                  </div>
-                  <div className="relative flex justify-center">
-                    <span className="bg-[var(--card)] px-3 text-[10px] uppercase font-bold tracking-wider text-[var(--muted-foreground)]">
-                      {t.orFb}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="flex flex-col gap-2.5">
-                  <button
-                    type="button"
-                    onClick={handleFacebookLogin}
-                    disabled={isLoading}
-                    className="w-full flex items-center justify-center gap-2.5 px-4 py-2.5 rounded-xl text-xs font-semibold bg-[#1877F2] text-white hover:bg-[#166FE5] active:scale-[0.98] transition-all disabled:opacity-60 shadow-md shadow-[#1877F2]/20"
-                  >
-                    {isLoading && step === "fb" ? <SpinnerIcon /> : <FacebookIcon />}
-                    <span>{step === "fb" ? t.btnFbLoading : step === "api" ? t.btnApiLoading : t.btnFb}</span>
-                  </button>
-
-                  {/* Manual Access Token Input & Login */}
-                  <form onSubmit={handleManualTokenSubmit} className="flex gap-2 mt-1">
-                    <div className="relative flex-1 flex items-center">
-                      <KeyRound className="w-4 h-4 absolute left-3 text-[var(--muted-foreground)] rtl:right-3 rtl:left-auto" />
-                      <input
-                        type="text"
-                        value={manualAccessToken}
-                        onChange={(e) => setManualAccessToken(e.target.value)}
-                        placeholder={t.manualAccessTokenPlaceholder}
-                        disabled={isLoading}
-                        className="w-full pl-9 pr-3 rtl:pr-9 rtl:pl-3 py-2 text-xs rounded-xl border border-[var(--border)] bg-[var(--background)] text-[var(--foreground)] focus:outline-none focus:ring-2 focus:ring-[var(--primary)] transition-all"
-                      />
-                    </div>
-                    <button
-                      type="submit"
-                      disabled={isLoading || !manualAccessToken.trim()}
-                      className="px-3 py-2 rounded-xl text-xs font-semibold bg-[var(--secondary)] text-[var(--secondary-foreground)] hover:opacity-90 transition-all disabled:opacity-50 border border-[var(--border)] whitespace-nowrap"
-                    >
-                      {step === "api" ? <SpinnerIcon /> : t.btnManualLogin}
-                    </button>
-                  </form>
-                </div>
               </>
             )}
 
