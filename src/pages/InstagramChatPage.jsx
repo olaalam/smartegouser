@@ -3,10 +3,11 @@ import {
   ArrowLeft, Camera, Check, CheckCheck, CreditCard,
   LoaderCircle, MessageCircle, RefreshCw, Search, Send,
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { toast } from "sonner";
 import { useGet } from "../hooks/useGet";
+import { getEcho } from "../api/echoService";
 import { API_ENDPOINTS } from "../utils/constants";
 import {
   getInstagramConversations,
@@ -86,9 +87,10 @@ export default function InstagramChatPage() {
   const locale = isRTL ? "ar-EG" : "en-GB";
   const t = COPY[lang] ?? COPY.en;
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 const { data: accountsData, loading: accountsLoading } = useGet(ACCOUNTS_URL, { per_page: 100, paginate: 0 });
   const accounts = useMemo(() => accountsData?.data ?? [], [accountsData]);
-  const [accountId, setAccountId] = useState("");
+  const [accountId, setAccountId] = useState(() => searchParams.get("accountId") || "");
 
   const [conversations, setConversations] = useState([]);
   const [conversationsLoading, setConversationsLoading] = useState(false);
@@ -123,7 +125,7 @@ const { data: accountsData, loading: accountsLoading } = useGet(ACCOUNTS_URL, { 
     if (page === 1) setConversationsLoading(true);
     else setConversationsLoadingMore(true);
     try {
-      const response = await getInstagramConversations({ instagram_item_id: account.id, page, per_page: PAGE_SIZE, paginate: true });
+      const response = await getInstagramConversations({ instagram_item_id: account.id, page, per_page: PAGE_SIZE, paginate: 0 });
       if (requestId !== conversationRequestRef.current) return;
       const list = response.data?.data ?? [];
       setConversations((current) => page === 1 ? list : [...current, ...list.filter((item) => !current.some((entry) => entry.sender_id === item.sender_id))]);
@@ -164,7 +166,7 @@ const { data: accountsData, loading: accountsLoading } = useGet(ACCOUNTS_URL, { 
         sender_id: selectedConversation.sender_id,
         page,
         per_page: PAGE_SIZE,
-        paginate: true,
+        paginate: 0,
       });
       if (requestId !== messageRequestRef.current) return;
       const raw = response.data?.data ?? [];
@@ -212,6 +214,59 @@ const { data: accountsData, loading: accountsLoading } = useGet(ACCOUNTS_URL, { 
     markInstagramRead({ instagram_item_id: account.id, sender_id: conversation.sender_id })
       .catch((error) => console.error("Could not mark Instagram conversation as read", error));
   }, [account]);
+
+  useEffect(() => {
+    if (!account || !canChat || !selectedConversation) return undefined;
+
+    const echo = getEcho();
+    const instagramId = account.instagram_id || account.id;
+    const channelName = `userInsta_${selectedConversation.sender_id}_${instagramId}`;
+    const channel = echo.channel(channelName);
+
+    channel.listen(".MessageSent", (event) => {
+      const payload = event.message && typeof event.message === "object" ? event.message : event;
+      const isAdmin = Boolean(payload.is_admin) || payload.sender_type === "admin";
+      const incoming = {
+        ...payload,
+        id: payload.id ?? payload.message_id ?? `realtime-${Date.now()}`,
+        message: payload.message ?? payload.text ?? "",
+        is_admin: isAdmin,
+        sender_type: payload.sender_type || (isAdmin ? "admin" : "user"),
+        is_image: payload.is_image || false,
+        created_at: payload.created_at || new Date().toISOString(),
+      };
+
+      setMessages((current) => {
+        if (current.some((message) => String(message.id) === String(incoming.id))) return current;
+        if (isAdmin) {
+          const optimisticIndex = current.findIndex((message) => message._optimistic && message.message === incoming.message);
+          if (optimisticIndex !== -1) {
+            const next = [...current];
+            next[optimisticIndex] = incoming;
+            return next;
+          }
+        }
+        return [...current, incoming];
+      });
+
+      setConversations((current) => {
+        const existing = current.find((conversation) => String(conversation.sender_id) === String(selectedConversation.sender_id));
+        if (!existing) return current;
+        const updated = {
+          ...existing,
+          last_message: incoming.is_image ? "📷 صورة" : incoming.message,
+          last_message_at: incoming.created_at,
+          last_sender_type: incoming.sender_type,
+          unread_count: 0,
+        };
+        return [updated, ...current.filter((conversation) => String(conversation.sender_id) !== String(selectedConversation.sender_id))];
+      });
+
+      if (!isAdmin) markConversationRead(selectedConversation);
+    });
+
+    return () => echo.leave(channelName);
+  }, [account, canChat, selectedConversation, markConversationRead]);
 
   const selectAccount = (nextAccountId) => {
     conversationRequestRef.current += 1;

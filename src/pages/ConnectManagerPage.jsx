@@ -1,7 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { Link2 } from "lucide-react";
+import { toast } from "sonner";
 
 // App ID الخاص بفيسبوك
 const FB_APP_ID = import.meta.env.VITE_FB_APP_ID || "1522838669646043";
@@ -31,7 +32,11 @@ const COPY = {
     facebookConnect: "Connect by FB",
     connecting: "Connecting...",
     allChannels: "Messaging channels",
-    secure: "Account connection",
+    channelCount: "2 channels",
+    facebookType: "MESSAGING CHANNEL",
+    whatsappType: "BUSINESS CHANNEL",
+    connectHint: "Not connected",
+    facebookConnectFailed: "Could not connect Facebook. Please try again.",
   },
   ar: {
     title: "ربط الحسابات",
@@ -43,38 +48,41 @@ const COPY = {
     facebookConnect: "ربط باستخدام FB",
     connecting: "جاري الربط...",
     allChannels: "قنوات المراسلة",
-    secure: "اتصال الحساب",
+    channelCount: "قناتان",
+    facebookType: "قناة مراسلة",
+    whatsappType: "قناة أعمال",
+    connectHint: "غير متصلة",
+    facebookConnectFailed: "تعذر ربط Facebook. حاولي مرة أخرى.",
   },
 };
 
-function ConnectionCard({ icon: Icon, title, description, accent, onConnect, connectLabel, loading }) {
+function ConnectionCard({ icon: Icon, title, type, description, accent, onConnect, connectLabel, loading, connectHint }) {
   return (
-    <article className="flex h-full min-w-0 flex-col justify-between rounded-xl border border-[#e4e7ec] bg-white p-6 shadow-sm transition-all hover:shadow-md">
-      <div className="flex flex-col">
-        <div className="flex items-center gap-3.5">
+    <article className="group flex h-full min-w-0 flex-col rounded-xl border border-[var(--border)] bg-[var(--card)] p-5 transition-colors hover:border-[var(--primary)]/40">
+      <div className="flex items-start gap-4">
           <span
-            className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl"
-            style={{ backgroundColor: `${accent}12`, color: accent }}
+            className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border border-[var(--border)] bg-[var(--background)]"
           >
-            <Icon className="h-6 w-6" aria-hidden="true" />
+            <Icon className="h-5 w-5" style={{ color: accent }} aria-hidden="true" />
           </span>
-          <div>
-            <h2 className="text-base font-bold text-[#1d2939]">{title}</h2>
+          <div className="min-w-0 flex-1 pt-0.5">
+            <p className="text-[10px] font-semibold text-[var(--muted-foreground)]">{type}</p>
+            <h2 className="mt-1 text-base font-semibold text-[var(--foreground)]">{title}</h2>
           </div>
-        </div>
-        <p className="mt-4 text-xs leading-relaxed text-[#667085]">{description}</p>
       </div>
+      <p className="mt-4 min-h-10 text-sm leading-5 text-[var(--muted-foreground)]">{description}</p>
 
-      <div className="mt-6 pt-2">
+      <div className="mt-auto flex flex-wrap items-center justify-between gap-3 border-t border-[var(--border)] pt-4">
+        <span className="text-xs text-[var(--muted-foreground)]">{connectHint}</span>
         <button
           type="button"
           onClick={onConnect}
           disabled={loading}
-          className="flex min-h-11 w-full items-center justify-center gap-2 rounded-lg px-4 text-xs font-semibold text-white shadow-sm transition-all hover:opacity-95 active:scale-[0.99] disabled:opacity-50"
+          className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg px-4 text-sm font-semibold text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
           style={{ backgroundColor: accent }}
         >
           <Link2 className="h-4 w-4" aria-hidden="true" />
-          {loading ? "..." : connectLabel}
+          {connectLabel}
         </button>
       </div>
     </article>
@@ -111,7 +119,7 @@ export default function ConnectManagerPage() {
   }, []);
 
   // دالة إرسال الـ access_token إلى API الخادم
-  const sendFacebookTokenToBackend = async (accessToken) => {
+  const sendFacebookTokenToBackend = useCallback(async (accessToken) => {
     try {
       const response = await fetch("https://bcknd.smartego.org/api/auth/facebook", {
         method: "POST",
@@ -120,16 +128,26 @@ export default function ConnectManagerPage() {
         },
         body: JSON.stringify({ access_token: accessToken }),
       });
-      const data = await response.json();
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.message || t.facebookConnectFailed);
       console.log("تمت عملية الربط بنجاح:", data);
 
       navigate("/fb-pages");
     } catch (err) {
       console.error("حدث خطأ أثناء عملية الربط مع الفيسبوك:", err);
+      toast.error(err.message || t.facebookConnectFailed);
     } finally {
       setLoadingFb(false);
     }
-  };
+  }, [navigate, t.facebookConnectFailed]);
+
+  useEffect(() => {
+    const accessToken = new URLSearchParams(window.location.hash.slice(1)).get("access_token");
+    if (!accessToken) return;
+
+    window.history.replaceState(null, "", `${window.location.pathname}${window.location.search}`);
+    sendFacebookTokenToBackend(accessToken);
+  }, [sendFacebookTokenToBackend]);
 
   // دالة تسجيل الدخول بفيسبوك
   const handleFacebookConnect = () => {
@@ -147,7 +165,7 @@ export default function ConnectManagerPage() {
         { scope: "pages_show_list,pages_messaging,public_profile" }
       );
     } else {
-      const redirectUri = window.location.origin + "/connect-manager";
+      const redirectUri = `${window.location.origin}/connect-manager`;
       const fbUrl = `https://www.facebook.com/v18.0/dialog/oauth?client_id=${FB_APP_ID}&redirect_uri=${encodeURIComponent(
         redirectUri
       )}&scope=pages_show_list,pages_messaging,public_profile&response_type=token`;
@@ -156,39 +174,41 @@ export default function ConnectManagerPage() {
   };
 
   return (
-    <main className="min-h-screen bg-[#f7f9fc] px-4 py-7 text-[#1d2939] sm:px-6 lg:px-8" dir={isRTL ? "rtl" : "ltr"}>
-      <div className="mx-auto max-w-4xl">
-        <header className="mb-8 flex flex-wrap items-end justify-between gap-4">
+    <main className="min-h-screen bg-[var(--background)] px-4 py-8 text-[var(--foreground)] sm:px-6 lg:px-8" dir={isRTL ? "rtl" : "ltr"}>
+      <div className="mx-auto max-w-5xl">
+        <header className="mb-7 flex flex-wrap items-end justify-between gap-5 border-b border-[var(--border)] pb-6">
           <div>
-            <p className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase text-[#667085]">
+            <p className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase text-[var(--primary)]">
               <Link2 className="h-4 w-4" aria-hidden="true" />
               {t.allChannels}
             </p>
-            <h1 className="text-2xl font-bold tracking-tight">{t.title}</h1>
-            <p className="mt-1 max-w-2xl text-sm text-[#667085]">{t.subtitle}</p>
+            <h1 className="text-2xl font-bold">{t.title}</h1>
+            <p className="mt-1 max-w-2xl text-sm text-[var(--muted-foreground)]">{t.subtitle}</p>
           </div>
-          <div className="flex items-center gap-2 rounded-md border border-[#e4e7ec] bg-white px-3 py-2 text-xs text-[#667085]">
-            <span className="h-2 w-2 rounded-full bg-emerald-500" aria-hidden="true" />
-            {t.secure}
+          <div className="inline-flex items-center gap-2 rounded-lg border border-[var(--border)] bg-[var(--card)] px-3 py-2 text-xs font-medium text-[var(--muted-foreground)]">
+            <Link2 className="h-3.5 w-3.5" aria-hidden="true" />
+            {t.channelCount}
           </div>
         </header>
 
         <section aria-labelledby="available-connections-heading">
-          <div className="mb-4 flex items-center justify-between border-b border-[#e4e7ec] pb-3">
-            <h2 id="available-connections-heading" className="text-sm font-semibold">
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <h2 id="available-connections-heading" className="text-sm font-semibold text-[var(--foreground)]">
               {t.available}
             </h2>
-            <span className="text-xs text-[#667085]">2</span>
+            <span className="text-xs text-[var(--muted-foreground)]">02</span>
           </div>
 
-          <div className="grid items-stretch gap-6 md:grid-cols-2">
+          <div className="grid items-stretch gap-4 lg:grid-cols-2">
             {/* Facebook Card */}
             <ConnectionCard
               title="Facebook"
+              type={t.facebookType}
               description={t.messengerDescription}
               icon={FacebookIcon}
               accent="#0866ff"
               connectLabel={loadingFb ? t.connecting : t.facebookConnect}
+              connectHint={t.connectHint}
               onConnect={handleFacebookConnect}
               loading={loadingFb}
             />
@@ -196,10 +216,12 @@ export default function ConnectManagerPage() {
             {/* WhatsApp Card */}
             <ConnectionCard
               title="WhatsApp"
+              type={t.whatsappType}
               description={t.whatsappDescription}
               icon={WhatsappIcon}
               accent="#25D366"
               connectLabel={t.whatsappConnect}
+              connectHint={t.connectHint}
               onConnect={() => navigate("/whatsapp")}
             />
           </div>

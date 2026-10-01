@@ -13,6 +13,7 @@ import InstagramSubscriptionPage from "./pages/InstagramSubscriptionPage";
 import ConnectManagerPage from "./pages/ConnectManagerPage";
 import FacebookPagesPage from "./pages/FacebookPagesPage";
 import FacebookPageManagePage from "./pages/FacebookPageManagePage";
+import InstagramPageManagePage from "./pages/InstagramPageManagePage";
 import AppLayout from "./components/layout/AppLayout";
 import UserOrdersPage from "./pages/UserOrdersPage";
 
@@ -58,6 +59,11 @@ export default function App() {
         />
 
         <Route
+          path="/connect-manager"
+          element={<PrivateRoute><AppLayout><ConnectManagerPage /></AppLayout></PrivateRoute>}
+        />
+
+        <Route
           path="/order"
           element={<PrivateRoute><AppLayout><OrderPage /></AppLayout></PrivateRoute>}
         />
@@ -75,6 +81,11 @@ export default function App() {
         <Route
           path="/fb-pages/:pageId/manage"
           element={<PrivateRoute><AppLayout><FacebookPageManagePage /></AppLayout></PrivateRoute>}
+        />
+
+        <Route
+          path="/instagram-pages/:instagramId/manage"
+          element={<PrivateRoute><AppLayout><InstagramPageManagePage /></AppLayout></PrivateRoute>}
         />
 
         <Route

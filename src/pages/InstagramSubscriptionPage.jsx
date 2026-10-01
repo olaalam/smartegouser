@@ -1,5 +1,6 @@
 import { useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { toast } from "sonner";
 import { BadgeCheck, Camera, ExternalLink, FileText, LoaderCircle, Upload } from "lucide-react";
@@ -58,13 +59,14 @@ export default function InstagramSubscriptionPage() {
   const t = COPY[lang] ?? COPY.en;
   const isRTL = lang === "ar";
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { data: accountsData, loading: accountsLoading, error: accountsError } = useGet(API_ENDPOINTS.INSTAGRAM.ACCOUNTS);
   const { data: itemsData } = useGet(API_ENDPOINTS.INSTAGRAM.ITEMS);
   const { data: packagesData, loading: packagesLoading, error: packagesError } = useGet(API_ENDPOINTS.INSTAGRAM.PACKAGES, { lang });
   const accounts = useMemo(() => accountsData?.data ?? [], [accountsData]);
   const items = itemsData?.data ?? [];
   const packages = packagesData?.instagram_packages ?? packagesData?.data ?? [];
-  const [instagramId, setInstagramId] = useState("");
+  const [instagramId, setInstagramId] = useState(() => searchParams.get("instagramId") || "");
   const [packageId, setPackageId] = useState("");
   const [websiteUrl, setWebsiteUrl] = useState("");
   const [androidLink, setAndroidLink] = useState("");

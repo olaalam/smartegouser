@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router-dom";
-import { PanelsTopLeft, MessageCircle, MessageSquare, ArrowUpRight, CreditCard, BrainCircuit } from "lucide-react";
+import { PanelsTopLeft, MessageCircle, MessageSquare, ArrowUpRight, CreditCard, Info } from "lucide-react";
 import { useGet } from "../hooks/useGet";
 import { API_ENDPOINTS } from "../utils/constants";
 import { useMinimumLoading } from "../hooks/useMinimumLoading";
@@ -13,7 +13,7 @@ import { localizeApiLabel } from "../utils/localization";
 
 const copy = {
   en: {
-    back: "All Facebook pages", manage: "Page management", details: "Page details",
+    back: "All Facebook pages", manage: "Page management", details: "Page details", info: "Info", chats: "Chats",
     messenger: "Facebook Chat", whatsapp: "WhatsApp Chat", subscription: "Subscription",
     ai: "AI settings",
     pageId: "Page ID", category: "Category", subscriptionStatus: "Subscription status", availableMessages: "Available messages",
@@ -21,7 +21,7 @@ const copy = {
     missing: "Facebook page not found", missingHelp: "The page may have been disconnected. Refresh your page list and try again.",
   },
   ar: {
-    back: "كل صفحات فيسبوك", manage: "إدارة الصفحة", details: "تفاصيل الصفحة",
+    back: "كل صفحات فيسبوك", manage: "إدارة الصفحة", details: "تفاصيل الصفحة", info: "المعلومات", chats: "المحادثات",
     messenger: "شات فيسبوك", whatsapp: "شات واتساب", subscription: "الاشتراك",
     ai: "إعدادات AI",
     pageId: "معرّف الصفحة", category: "التصنيف", subscriptionStatus: "حالة الاشتراك", availableMessages: "الرسائل المتاحة",
@@ -47,6 +47,7 @@ export default function FacebookPageManagePage() {
   const navigate = useNavigate();
   const lang = useSelector((state) => state.ui.lang);
   const t = copy[lang] ?? copy.en;
+  const [activeTab, setActiveTab] = useState("info");
   const { data, loading, error, refetch } = useGet(API_ENDPOINTS.MESSENGER.PAGES);
   const { isVisible: showLoader, beginLoading } = useMinimumLoading(loading);
   const pages = data?.data ?? [];
@@ -85,47 +86,47 @@ export default function FacebookPageManagePage() {
                     </div>
                   </header>
 
-                  <div className="grid gap-6 lg:grid-cols-[220px_minmax(0,1fr)]">
-                    <nav aria-label={t.manage} className="flex flex-col border-y border-[var(--border)] py-2 lg:border-y-0 lg:border-e lg:pe-4">
-                      <button type="button" onClick={() => navigate(`/messenger-chat?pageId=${encodeURIComponent(page.page_id)}`)}
-                        className="flex min-h-11 items-center gap-3 rounded-lg px-3 text-start text-sm font-medium text-[var(--foreground)] transition-colors hover:bg-[var(--muted)]">
-                        <MessageSquare className="h-4 w-4 shrink-0 text-[oklch(0.42_0.14_240)]" aria-hidden="true" />
-                        <span className="min-w-0 flex-1">{t.messenger}</span>
-                        <ArrowUpRight className="h-4 w-4 shrink-0 text-[var(--muted-foreground)]" aria-hidden="true" />
+                  <div role="tablist" aria-label={t.manage} className="flex border-b border-[var(--border)]">
+                    {[["info", t.info, Info], ["chats", t.chats, MessageSquare]].map(([key, label, Icon]) => (
+                      <button key={key} id={`facebook-${key}-tab`} type="button" role="tab" aria-selected={activeTab === key}
+                        aria-controls={`facebook-${key}-panel`} onClick={() => setActiveTab(key)}
+                        className={`inline-flex min-h-11 items-center gap-2 border-b-2 px-4 text-sm font-semibold transition-colors ${activeTab === key ? "border-[var(--primary)] text-[var(--primary)]" : "border-transparent text-[var(--muted-foreground)] hover:text-[var(--foreground)]"}`}>
+                        <Icon className="h-4 w-4" aria-hidden="true" />{label}
                       </button>
-                      <button type="button" onClick={() => navigate("/whatsapp-chat")}
-                        className="flex min-h-11 items-center gap-3 rounded-lg px-3 text-start text-sm font-medium text-[var(--foreground)] transition-colors hover:bg-[var(--muted)]">
-                        <MessageCircle className="h-4 w-4 shrink-0 text-[oklch(0.4_0.14_155)]" aria-hidden="true" />
-                        <span className="min-w-0 flex-1">{t.whatsapp}</span>
-                        <ArrowUpRight className="h-4 w-4 shrink-0 text-[var(--muted-foreground)]" aria-hidden="true" />
-                      </button>
-                      <button type="button" onClick={() => navigate(`/order?pageId=${encodeURIComponent(page.page_id)}`)}
-                        className="flex min-h-11 items-center gap-3 rounded-lg px-3 text-start text-sm font-medium text-[var(--foreground)] transition-colors hover:bg-[var(--muted)]">
-                        <CreditCard className="h-4 w-4 shrink-0 text-[var(--primary)]" aria-hidden="true" />
-                        <span className="min-w-0 flex-1">{t.subscription}</span>
-                        <ArrowUpRight className="h-4 w-4 shrink-0 text-[var(--muted-foreground)]" aria-hidden="true" />
-                      </button>
-                      <button type="button" onClick={() => document.getElementById("ai-settings")?.scrollIntoView({ behavior: "smooth", block: "start" })}
-                        className="flex min-h-11 items-center gap-3 rounded-lg px-3 text-start text-sm font-medium text-[var(--foreground)] transition-colors hover:bg-[var(--muted)]">
-                        <BrainCircuit className="h-4 w-4 shrink-0 text-[var(--primary)]" aria-hidden="true" />
-                        <span className="min-w-0 flex-1">{t.ai}</span>
-                      </button>
-                    </nav>
-
-                    <section aria-labelledby="page-details-heading" className="min-w-0">
-                      <h2 id="page-details-heading" className="mb-3 text-base font-semibold text-[var(--foreground)]">{t.details}</h2>
-                      <dl className="divide-y divide-[var(--border)] border-y border-[var(--border)]">
-                        {details.map(([label, value]) => (
-                          <div key={label} className="flex flex-wrap items-center justify-between gap-2 py-3">
-                            <dt className="text-sm text-[var(--muted-foreground)]">{label}</dt>
-                            <dd className="max-w-full break-all text-sm font-medium text-[var(--foreground)]">{value}</dd>
-                          </div>
-                        ))}
-                      </dl>
-                    </section>
+                    ))}
                   </div>
 
-                  <AISettingsPanel key={page.page_id} pageId={page.page_id} lang={lang} />
+                  {activeTab === "info" ? (
+                    <section id="facebook-info-panel" role="tabpanel" aria-labelledby="facebook-info-tab" className="space-y-6">
+                      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_240px]">
+                        <div>
+                          <h2 className="mb-3 text-base font-semibold text-[var(--foreground)]">{t.details}</h2>
+                          <dl className="divide-y divide-[var(--border)] border-y border-[var(--border)]">
+                            {details.map(([label, value]) => (
+                              <div key={label} className="flex flex-wrap items-center justify-between gap-2 py-3">
+                                <dt className="text-sm text-[var(--muted-foreground)]">{label}</dt>
+                                <dd className="max-w-full break-all text-sm font-medium text-[var(--foreground)]">{value}</dd>
+                              </div>
+                            ))}
+                          </dl>
+                        </div>
+
+                      </div>
+                      <AISettingsPanel key={page.page_id} pageId={page.page_id} lang={lang} />
+                    </section>
+                  ) : (
+                    <section id="facebook-chats-panel" role="tabpanel" aria-labelledby="facebook-chats-tab" className="grid max-w-3xl gap-5 sm:grid-cols-2">
+                      {[[t.messenger, MessageSquare, "text-[oklch(0.42_0.14_240)]", () => navigate(`/messenger-chat?pageId=${encodeURIComponent(page.page_id)}`)],
+                        [t.whatsapp, MessageCircle, "text-[oklch(0.4_0.14_155)]", () => navigate("/whatsapp-chat")]].map(([label, Icon, color, open]) => (
+                        <div key={label} className="flex min-h-32 items-center justify-between gap-4 border-y border-[var(--border)] py-5">
+                          <div className="flex items-center gap-3"><Icon className={`h-5 w-5 shrink-0 ${color}`} aria-hidden="true" /><h2 className="text-sm font-semibold text-[var(--foreground)]">{label}</h2></div>
+                          <button type="button" onClick={open} className="inline-flex min-h-10 items-center gap-2 rounded-lg px-3 text-sm font-semibold text-white" style={{ background: "var(--primary)" }}>
+                            <ArrowUpRight className="h-4 w-4" aria-hidden="true" />{t.manage}
+                          </button>
+                        </div>
+                      ))}
+                    </section>
+                  )}
                 </div>
               )}
       </main>
