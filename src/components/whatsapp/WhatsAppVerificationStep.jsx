@@ -3,6 +3,7 @@ import { toast } from "sonner";
 import { CheckCircle2, RefreshCw, Send, ShieldCheck } from "lucide-react";
 import { usePost } from "../../hooks/usePost";
 import { API_ENDPOINTS } from "../../utils/constants";
+import { saveChannelConnection } from "../../utils/channelConnections";
 import SectionCard from "../ui/SectionCard";
 
 const RESEND_COOLDOWN_MS = 60_000;
@@ -68,6 +69,7 @@ export default function WhatsAppVerificationStep({ items, loading, error, refetc
       toast.error(result.error || t.error);
       return;
     }
+    saveChannelConnection("whatsapp");
     setRequestedFor(null);
     toast.success(t.verifiedSuccess);
     refetch();

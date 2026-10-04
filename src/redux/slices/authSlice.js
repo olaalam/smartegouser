@@ -1,4 +1,5 @@
 import { createSlice } from "@reduxjs/toolkit";
+import { clearChannelConnections } from "../../utils/channelConnections";
 
 // ─── localStorage helpers ──────────────────────────────────────────────────────
 
@@ -16,6 +17,7 @@ export function clearAuthFromStorage() {
   ["token", "token_type", "user", "is_new"].forEach((key) =>
     localStorage.removeItem(key)
   );
+  clearChannelConnections();
 }
 
 /** Rehydrate state from localStorage on app boot. */

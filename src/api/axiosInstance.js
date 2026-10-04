@@ -1,4 +1,5 @@
 import axios from "axios";
+import { clearChannelConnections } from "../utils/channelConnections";
 
 const axiosInstance = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || "https://api.example.com",
@@ -26,6 +27,7 @@ axiosInstance.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       localStorage.removeItem("token");
+      clearChannelConnections();
       window.location.href = "/login";
     }
     return Promise.reject(error);

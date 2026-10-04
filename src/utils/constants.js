@@ -6,6 +6,7 @@ export const API_ENDPOINTS = {
   USER: {
     DASHBOARD:      "user/dashboard",
     PROFILE:        "user",
+    ALL_CHATS:      "user/all_chats",
     HISTORY_ORDERS: "user/history_orders",
     PENDING_ORDERS: "user/pending_orders",
   },

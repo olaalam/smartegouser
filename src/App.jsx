@@ -16,6 +16,7 @@ import FacebookPageManagePage from "./pages/FacebookPageManagePage";
 import InstagramPageManagePage from "./pages/InstagramPageManagePage";
 import AppLayout from "./components/layout/AppLayout";
 import UserOrdersPage from "./pages/UserOrdersPage";
+import ChatsPage from "./pages/ChatsPage";
 
 // ─── Route guards ─────────────────────────────────────────────────────────────
 
@@ -96,6 +97,11 @@ export default function App() {
         <Route
           path="/whatsapp"
           element={<PrivateRoute><AppLayout><WhatsAppPage /></AppLayout></PrivateRoute>}
+        />
+
+        <Route
+          path="/chats"
+          element={<PrivateRoute><AppLayout><ChatsPage /></AppLayout></PrivateRoute>}
         />
 
         <Route

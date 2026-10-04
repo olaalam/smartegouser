@@ -3,8 +3,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useSelector } from "react-redux";
 import {
-  Search, Send, ImageIcon, Smile, MoreHorizontal,
-  ChevronLeft, Phone, Video, Info, CheckCheck, Check,
+  Search, Send, ImageIcon, Smile,
+  ChevronLeft, Info, CheckCheck, Check,
   Loader2, RefreshCw, MessageCircle,
 } from "lucide-react";
 
@@ -94,7 +94,7 @@ function Avatar({ name = "?", size = 40, online = false }) {
 }
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
-export default function MessengerChatPage() {
+export default function MessengerChatPage({ embedded = false }) {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const lang = useSelector((state) => state.ui.lang);
@@ -128,7 +128,10 @@ export default function MessengerChatPage() {
     setPagesLoading(true);
     getMessengerPages()
       .then((r) => {
-        const list = r.data?.data || [];
+        const responsePages = r.data?.data || [];
+        const list = embedded
+          ? responsePages.filter((page) => page.subscription_status === true)
+          : responsePages;
         setPages(list);
           const requestedPage = list.find((page) => String(page.page_id) === requestedPageId);
           const activePage = list.find(hasChatAccess) || list[0];
@@ -137,7 +140,7 @@ export default function MessengerChatPage() {
       })
       .catch(console.error)
       .finally(() => setPagesLoading(false));
-        }, [requestedPageId]);
+        }, [embedded, requestedPageId]);
 
   // ── Load Conversations ───────────────────────────────────────────────────────
   useEffect(() => {
@@ -258,7 +261,7 @@ export default function MessengerChatPage() {
 
   // ── Render ──────────────────────────────────────────────────────────────────
   return (
-    <div style={{ ...styles.root, direction: isRTL ? "rtl" : "ltr" }}>
+    <div style={{ ...styles.root, height: embedded ? "100%" : "100vh", minWidth: 0, direction: isRTL ? "rtl" : "ltr" }}>
       {/* ── Sidebar ─────────────────────────────────────────── */}
       <aside style={styles.sidebar}>
         {/* Header */}
@@ -287,6 +290,7 @@ export default function MessengerChatPage() {
                 setSelectedPage(p);
               }}
             >
+              {embedded && !selectedPage && <option value="">{t.choosePage}</option>}
               {pages.map((p) => (
                   <option key={p.page_id} value={p.page_id}>
                     {hasChatAccess(p) ? "✅" : "🔒"} {p.page_name} · {localizeApiLabel(p.subscription_status, lang, t.noSubscription)} · {formatAvailableMessages(p.available_msgs)}
@@ -547,7 +551,8 @@ const styles = {
     overflow: "hidden",
   },
   sidebar: {
-    width: 360,
+    width: "min(44%, 360px)",
+    minWidth: 0,
     background: "#242526",
     display: "flex",
     flexDirection: "column",

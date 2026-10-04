@@ -81,16 +81,21 @@ const uniqueOlder = (older, current) => {
   return [...older.filter((message) => !ids.has(message.id)), ...current];
 };
 
-export default function InstagramChatPage() {
+export default function InstagramChatPage({ embedded = false }) {
   const lang = useSelector((state) => state.ui.lang);
   const isRTL = lang === "ar";
   const locale = isRTL ? "ar-EG" : "en-GB";
   const t = COPY[lang] ?? COPY.en;
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
 const { data: accountsData, loading: accountsLoading } = useGet(ACCOUNTS_URL, { per_page: 100, paginate: 0 });
-  const accounts = useMemo(() => accountsData?.data ?? [], [accountsData]);
-  const [accountId, setAccountId] = useState(() => searchParams.get("accountId") || "");
+  const accounts = useMemo(() => {
+    const list = accountsData?.data ?? [];
+    return embedded ? list.filter((item) => item.subscription_status === true) : list;
+  }, [accountsData, embedded]);
+  const requestedAccountId = searchParams.get("accountId");
+  const requestedInstagramId = searchParams.get("instagramId");
+  const accountId = requestedAccountId || requestedInstagramId || "";
 
   const [conversations, setConversations] = useState([]);
   const [conversationsLoading, setConversationsLoading] = useState(false);
@@ -113,8 +118,10 @@ const { data: accountsData, loading: accountsLoading } = useGet(ACCOUNTS_URL, { 
   const olderHeightRef = useRef(null);
   const conversationRequestRef = useRef(0);
   const messageRequestRef = useRef(0);
-  const defaultAccount = accounts.find(hasChatAccess) || accounts[0] || null;
-  const account = accounts.find((item) => String(item.id) === String(accountId)) ?? (!accountId ? defaultAccount : null);
+  const defaultAccount = embedded ? null : accounts.find(hasChatAccess) || accounts[0] || null;
+  const account = accounts.find((item) => String(item.id) === String(accountId))
+    ?? accounts.find((item) => String(item.instagram_id) === String(accountId))
+    ?? (!accountId ? defaultAccount : null);
   const canChat = hasChatAccess(account);
 
   const loadConversations = useCallback(async (page = 1) => {
@@ -271,7 +278,10 @@ const { data: accountsData, loading: accountsLoading } = useGet(ACCOUNTS_URL, { 
   const selectAccount = (nextAccountId) => {
     conversationRequestRef.current += 1;
     messageRequestRef.current += 1;
-    setAccountId(nextAccountId);
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.set("accountId", nextAccountId);
+    nextParams.delete("instagramId");
+    setSearchParams(nextParams);
     setSelectedConversation(null);
     setConversations([]);
     setMessages([]);
@@ -344,7 +354,7 @@ const { data: accountsData, loading: accountsLoading } = useGet(ACCOUNTS_URL, { 
   const activeLabel = account?.username ? `@${account.username}` : account?.name || t.title;
 
   return (
-    <main className="flex h-[100dvh] min-h-[520px] flex-col overflow-hidden bg-white text-[#262626]" dir={isRTL ? "rtl" : "ltr"}>
+    <main className={`flex ${embedded ? "h-full" : "h-[100dvh]"} min-h-[520px] flex-col overflow-hidden bg-white text-[#262626]`} dir={isRTL ? "rtl" : "ltr"}>
       <header className="flex h-[68px] shrink-0 items-center justify-between border-b border-[#dbdbdb] px-4 sm:px-6">
         <div className="flex min-w-0 items-center gap-3">
           <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-tr from-amber-400 via-rose-500 to-purple-600 text-white">
@@ -374,7 +384,7 @@ const { data: accountsData, loading: accountsLoading } = useGet(ACCOUNTS_URL, { 
       </header>
 
       <section className="mx-auto flex min-h-0 w-full max-w-[1440px] flex-1 overflow-hidden border-x border-[#dbdbdb]">
-        <aside className={`${selectedConversation ? "hidden md:flex" : "flex"} w-full shrink-0 flex-col border-e border-[#dbdbdb] md:w-[350px] lg:w-[398px]`}>
+        <aside className={`${selectedConversation ? "hidden md:flex" : "flex"} w-full shrink-0 flex-col border-e border-[#dbdbdb] ${embedded ? "md:w-[44%] lg:w-[44%]" : "md:w-[350px] lg:w-[398px]"}`}>
           <div className="flex h-[66px] shrink-0 items-center justify-between px-5">
             <h2 className="text-base font-semibold">{t.inbox}</h2>
             <button type="button" title={t.refresh} aria-label={t.refresh} onClick={() => loadConversations(1)} disabled={!canChat}

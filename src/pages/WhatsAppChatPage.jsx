@@ -1,10 +1,10 @@
 import { useState, useEffect, useLayoutEffect, useRef, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useSelector } from "react-redux";
 import {
   Search, Send, Smile, MoreVertical,
-  ChevronLeft, Camera,
+  ChevronLeft,
   CheckCheck, Check, Loader2, RefreshCw,
   MessageSquare, Paperclip,
 } from "lucide-react";
@@ -132,17 +132,30 @@ function WaLogo({ size = 28 }) {
 }
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
-export default function WhatsAppChatPage() {
+export default function WhatsAppChatPage({ embedded = false }) {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const requestedNumberId = searchParams.get("whatsItemId");
   const lang = useSelector((state) => state.ui.lang);
   const isRTL = lang === "ar";
   const locale = isRTL ? "ar-EG" : "en-GB";
   const t = CHAT_TEXT[lang] ?? CHAT_TEXT.en;
   // ── Numbers (useGet) ─────────────────────────────────────────────────────────
   const { data: numbersData, loading: numbersLoading } = useGet(NUMBERS_URL, NUMBERS_PARAMS);
-  const numbers = useMemo(() => numbersData?.data ?? [], [numbersData]);
-  const [selectedNumberId, setSelectedNumberId] = useState(null);
-  const selectedNumber = numbers.find((n) => n.id === selectedNumberId) ?? null;
+  const numbers = useMemo(() => {
+    const list = numbersData?.data ?? [];
+    return embedded ? list.filter((number) => number.subscription_status === true) : list;
+  }, [embedded, numbersData]);
+  const defaultNumber = embedded
+    ? null
+    : numbers.find(hasChatAccess)
+      || numbers.find((number) => number.phone_status === "CONNECTED" || number.phone_status === "active")
+      || numbers[0]
+      || null;
+  const selectedNumber = requestedNumberId
+    ? numbers.find((number) => String(number.id) === requestedNumberId) ?? null
+    : defaultNumber;
+  const selectedNumberId = selectedNumber?.id ?? null;
   const selectedNumberCanChat = hasChatAccess(selectedNumber);
 
   // ── Conversations ────────────────────────────────────────────────────────────
@@ -181,15 +194,7 @@ export default function WhatsAppChatPage() {
   const markReadRef = useRef(markRead);
   markReadRef.current = markRead; // الـ listener بتاع Echo يستخدم آخر نسخة
 
-  // ── 1. اختيار الرقم الافتراضي ────────────────────────────────────────────────
-  useEffect(() => {
-    if (selectedNumberId || !numbers.length) return;
-    const preferred =
-      numbers.find(hasChatAccess) || numbers.find((n) => n.phone_status === "CONNECTED" || n.phone_status === "active") || numbers[0];
-    setSelectedNumberId(preferred.id);
-  }, [numbers, selectedNumberId]);
-
-  // ── 2. Conversations (page 1 + load more) ────────────────────────────────────
+  // ── 1. Conversations (page 1 + load more) ────────────────────────────────────
   const loadConversations = useCallback(async (page = 1) => {
     if (!selectedNumberId || !hasChatAccess(selectedNumber)) return;
     const reqId = ++convReqRef.current;
@@ -370,26 +375,32 @@ export default function WhatsAppChatPage() {
     return acc;
   }, {});
 
+  const channelHeader = (
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", padding: "14px 16px", background: WA.header, flexShrink: 0 }}>
+      <WaAvatar name={t.me} size={40} />
+      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <WaLogo size={26} />
+        <span style={{ color: WA.text, fontWeight: 700, fontSize: 18 }}>WhatsApp</span>
+      </div>
+      <div style={{ display: "flex", gap: 6 }}>
+        <button style={waBtn} onClick={() => loadConversations(1)} disabled={!selectedNumberCanChat} title={t.refresh} aria-label={t.refresh}>
+          <RefreshCw size={18} color={WA.textMuted} />
+        </button>
+        <button style={waBtn}><MoreVertical size={18} color={WA.textMuted} /></button>
+      </div>
+    </div>
+  );
+
   return (
-    <div style={{ display: "flex", height: "100vh", background: WA.bg, fontFamily: "'Segoe UI',Tahoma,Arial,sans-serif", direction: isRTL ? "rtl" : "ltr", overflow: "hidden" }}>
+    <div style={{ display: "flex", flexDirection: embedded ? "column" : "row", height: embedded ? "100%" : "100vh", minWidth: 0, background: WA.bg, fontFamily: "'Segoe UI',Tahoma,Arial,sans-serif", direction: isRTL ? "rtl" : "ltr", overflow: "hidden" }}>
+      {embedded && channelHeader}
+      <div style={{ display: "flex", flex: 1, minWidth: 0, minHeight: 0, overflow: "hidden" }}>
 
       {/* ── Sidebar ────────────────────────────────────────────── */}
-      <aside style={{ width: 380, background: WA.sidebar, display: "flex", flexDirection: "column", borderLeft: `1px solid ${WA.border}`, flexShrink: 0 }}>
+      <aside style={{ width: embedded ? "44%" : 380, minWidth: 0, background: WA.sidebar, display: "flex", flexDirection: "column", borderLeft: `1px solid ${WA.border}`, flexShrink: 0 }}>
 
         {/* Header */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 16px", background: WA.header }}>
-          <WaAvatar name={t.me} size={40} />
-          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-            <WaLogo size={26} />
-            <span style={{ color: WA.text, fontWeight: 700, fontSize: 18 }}>WhatsApp</span>
-          </div>
-          <div style={{ display: "flex", gap: 6 }}>
-            <button style={waBtn} onClick={() => loadConversations(1)} disabled={!selectedNumberCanChat} title={t.refresh} aria-label={t.refresh}>
-              <RefreshCw size={18} color={WA.textMuted} />
-            </button>
-            <button style={waBtn}><MoreVertical size={18} color={WA.textMuted} /></button>
-          </div>
-        </div>
+        {!embedded && channelHeader}
 
         {/* WhatsApp Numbers Dropdown */}
         {numbers.length > 0 && (
@@ -397,8 +408,15 @@ export default function WhatsAppChatPage() {
             <select
               style={{ width: "100%", background: WA.searchInput, border: "none", borderRadius: 8, color: WA.text, padding: "8px 12px", fontSize: 13, cursor: "pointer", outline: "none" }}
               value={selectedNumberId ?? ""}
-              onChange={(e) => setSelectedNumberId(Number(e.target.value))}
+              onChange={(e) => {
+                const nextParams = new URLSearchParams(searchParams);
+                nextParams.set("whatsItemId", e.target.value);
+                setSearchParams(nextParams);
+              }}
             >
+              {embedded && !selectedNumberId && (
+                <option value="">{lang === "ar" ? "اختاري رقم واتساب" : "Select a WhatsApp number"}</option>
+              )}
               {numbers.map((n) => (
                 <option key={n.id} value={n.id} disabled={!hasChatAccess(n)}>
                   {n.phone} · {localizeApiLabel(n.subscription_status, lang, t.noSubscription)} · {formatAvailableMessages(n.available_msgs)}
@@ -657,6 +675,7 @@ export default function WhatsAppChatPage() {
           </div>
         )}
       </main>
+      </div>
 
       <style>{`
         @keyframes spin { to { transform: rotate(360deg); } }

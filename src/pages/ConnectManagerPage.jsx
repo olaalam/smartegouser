@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import axiosInstance from "../api/axiosInstance";
 import { setAuth, saveAuthToStorage } from "../redux/slices/authSlice";
 import { API_ENDPOINTS } from "../utils/constants";
+import { isChannelConnected, saveChannelConnection } from "../utils/channelConnections";
 
 // App ID الخاص بفيسبوك
 const FB_APP_ID = import.meta.env.VITE_FB_APP_ID || "1522838669646043";
@@ -34,12 +35,14 @@ const COPY = {
     messengerDescription: "Connect a Facebook page to manage Messenger conversations.",
     whatsappConnect: "Set up WhatsApp",
     facebookConnect: "Connect by FB",
+    manage: "Manage",
     connecting: "Connecting...",
     allChannels: "Messaging channels",
     channelCount: "2 channels",
     facebookType: "MESSAGING CHANNEL",
     whatsappType: "BUSINESS CHANNEL",
     connectHint: "Not connected",
+    connectedHint: "Connected",
     facebookConnectFailed: "Could not connect Facebook. Please try again.",
   },
   ar: {
@@ -50,12 +53,14 @@ const COPY = {
     messengerDescription: "اربطي صفحة فيسبوك لإدارة محادثات Messenger.",
     whatsappConnect: "إعداد WhatsApp",
     facebookConnect: "ربط باستخدام FB",
+    manage: "إدارة",
     connecting: "جاري الربط...",
     allChannels: "قنوات المراسلة",
     channelCount: "قناتان",
     facebookType: "قناة مراسلة",
     whatsappType: "قناة أعمال",
     connectHint: "غير متصلة",
+    connectedHint: "متصلة",
     facebookConnectFailed: "تعذر ربط Facebook. حاولي مرة أخرى.",
   },
 };
@@ -100,6 +105,8 @@ export default function ConnectManagerPage() {
   const t = COPY[lang] ?? COPY.en;
   const navigate = useNavigate();
   const [loadingFb, setLoadingFb] = useState(false);
+  const facebookConnected = isChannelConnected("facebook");
+  const whatsappConnected = isChannelConnected("whatsapp");
 
   // تهيئة Facebook SDK
   useEffect(() => {
@@ -129,6 +136,7 @@ export default function ConnectManagerPage() {
       const response = await axiosInstance.post(FACEBOOK_AUTH_URL, {
         access_token: accessToken,
       });
+      saveChannelConnection("facebook");
       const authData = response.data?.data ?? response.data;
 
       if (authData?.token) {
@@ -211,9 +219,9 @@ export default function ConnectManagerPage() {
               description={t.messengerDescription}
               icon={FacebookIcon}
               accent="#0866ff"
-              connectLabel={loadingFb ? t.connecting : t.facebookConnect}
-              connectHint={t.connectHint}
-              onConnect={handleFacebookConnect}
+              connectLabel={loadingFb ? t.connecting : facebookConnected ? t.manage : t.facebookConnect}
+              connectHint={facebookConnected ? t.connectedHint : t.connectHint}
+              onConnect={facebookConnected ? () => navigate("/fb-pages") : handleFacebookConnect}
               loading={loadingFb}
             />
 
@@ -224,8 +232,8 @@ export default function ConnectManagerPage() {
               description={t.whatsappDescription}
               icon={WhatsappIcon}
               accent="#25D366"
-              connectLabel={t.whatsappConnect}
-              connectHint={t.connectHint}
+              connectLabel={whatsappConnected ? t.manage : t.whatsappConnect}
+              connectHint={whatsappConnected ? t.connectedHint : t.connectHint}
               onConnect={() => navigate("/whatsapp")}
             />
           </div>
