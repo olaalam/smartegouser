@@ -81,6 +81,17 @@ const uniqueOlder = (older, current) => {
   return [...older.filter((message) => !ids.has(message.id)), ...current];
 };
 
+const sortMessagesChronologically = (messages) =>
+  messages
+    .map((message, index) => {
+      const timestamp = Date.parse(message.created_at);
+      return { message, index, timestamp: Number.isNaN(timestamp) ? Number.POSITIVE_INFINITY : timestamp };
+    })
+    .sort((a, b) => {
+      return a.timestamp - b.timestamp || a.index - b.index;
+    })
+    .map(({ message }) => message);
+
 export default function InstagramChatPage({ embedded = false }) {
   const lang = useSelector((state) => state.ui.lang);
   const isRTL = lang === "ar";
@@ -177,7 +188,7 @@ const { data: accountsData, loading: accountsLoading } = useGet(ACCOUNTS_URL, { 
       });
       if (requestId !== messageRequestRef.current) return;
       const raw = response.data?.data ?? [];
-      const chronological = [...raw].reverse();
+      const chronological = sortMessagesChronologically(raw);
       if (page === 1) setMessages(chronological);
       else {
         olderHeightRef.current = messageListRef.current?.scrollHeight ?? null;
@@ -230,7 +241,7 @@ const { data: accountsData, loading: accountsLoading } = useGet(ACCOUNTS_URL, { 
     const channelName = `userInsta_${selectedConversation.sender_id}_${instagramId}`;
     const channel = echo.channel(channelName);
 
-    channel.listen(".MessageSent", (event) => {
+    channel.listen(".UserChatEvent", (event) => {
       const payload = event.message && typeof event.message === "object" ? event.message : event;
       const isAdmin = Boolean(payload.is_admin) || payload.sender_type === "admin";
       const incoming = {
