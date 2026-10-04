@@ -8,6 +8,7 @@ import { useSelector } from "react-redux";
 import { toast } from "sonner";
 import { useGet } from "../hooks/useGet";
 import { getEcho } from "../api/echoService";
+import { publishActiveChat, publishChatRead } from "../utils/chatUnreadEvents";
 import { API_ENDPOINTS } from "../utils/constants";
 import {
   getInstagramConversations,
@@ -91,6 +92,23 @@ const sortMessagesChronologically = (messages) =>
       return a.timestamp - b.timestamp || a.index - b.index;
     })
     .map(({ message }) => message);
+
+const mergeMessages = (current, latest) => {
+  const merged = new Map();
+  [...latest, ...current].forEach((message, index) => {
+    const id = message.id ?? message.message_id;
+    merged.set(id == null ? `unkeyed:${index}` : String(id), message);
+  });
+  return sortMessagesChronologically([...merged.values()]);
+};
+
+const isBusinessMessage = (message) => {
+  const isAdmin = message.is_admin;
+  return isAdmin === true
+    || isAdmin === 1
+    || ["true", "1"].includes(String(isAdmin).toLowerCase())
+    || ["admin", "bot"].includes(String(message.sender_type).toLowerCase());
+};
 
 export default function InstagramChatPage({ embedded = false }) {
   const lang = useSelector((state) => state.ui.lang);
@@ -189,7 +207,7 @@ const { data: accountsData, loading: accountsLoading } = useGet(ACCOUNTS_URL, { 
       if (requestId !== messageRequestRef.current) return;
       const raw = response.data?.data ?? [];
       const chronological = sortMessagesChronologically(raw);
-      if (page === 1) setMessages(chronological);
+      if (page === 1) setMessages((current) => mergeMessages(current, chronological));
       else {
         olderHeightRef.current = messageListRef.current?.scrollHeight ?? null;
         setMessages((current) => uniqueOlder(chronological, current));
@@ -230,8 +248,18 @@ const { data: accountsData, loading: accountsLoading } = useGet(ACCOUNTS_URL, { 
   const markConversationRead = useCallback((conversation) => {
     if (!account || !conversation) return;
     markInstagramRead({ instagram_item_id: account.id, sender_id: conversation.sender_id })
+      .then(publishChatRead)
       .catch((error) => console.error("Could not mark Instagram conversation as read", error));
   }, [account]);
+
+  useEffect(() => {
+    publishActiveChat(selectedConversation ? {
+      channel: "instagram",
+      accountId: account?.instagram_id || account?.id,
+      senderId: selectedConversation.sender_id,
+    } : null);
+    return () => publishActiveChat(null);
+  }, [account?.id, account?.instagram_id, selectedConversation?.sender_id]);
 
   useEffect(() => {
     if (!account || !canChat || !selectedConversation) return undefined;
@@ -243,7 +271,7 @@ const { data: accountsData, loading: accountsLoading } = useGet(ACCOUNTS_URL, { 
 
     channel.listen(".UserChatEvent", (event) => {
       const payload = event.message && typeof event.message === "object" ? event.message : event;
-      const isAdmin = Boolean(payload.is_admin) || payload.sender_type === "admin";
+      const isAdmin = isBusinessMessage(payload);
       const incoming = {
         ...payload,
         id: payload.id ?? payload.message_id ?? `realtime-${Date.now()}`,
@@ -264,7 +292,7 @@ const { data: accountsData, loading: accountsLoading } = useGet(ACCOUNTS_URL, { 
             return next;
           }
         }
-        return [...current, incoming];
+        return mergeMessages(current, [incoming]);
       });
 
       setConversations((current) => {
@@ -478,7 +506,7 @@ const { data: accountsData, loading: accountsLoading } = useGet(ACCOUNTS_URL, { 
                 {messagesLoading && !messages.length ? (
                   <div className="flex flex-1 items-center justify-center"><LoaderCircle className="h-6 w-6 animate-spin text-[#8e8e8e]" aria-label="Loading" /></div>
                 ) : messages.length ? messages.map((message) => {
-                  const outgoing = Boolean(message.is_admin) || message.sender_type === "admin";
+                  const outgoing = isBusinessMessage(message);
                   return (
                     <div key={message.id} className={`mb-2 flex ${outgoing ? "justify-end" : "justify-start"}`}>
                       <div className={`max-w-[82%] rounded-[22px] px-4 py-2.5 sm:max-w-[70%] ${outgoing ? "bg-gradient-to-r from-[#3797f0] to-[#7d2ae8] text-white" : "border border-[#efefef] bg-[#efefef] text-[#262626]"}`}>

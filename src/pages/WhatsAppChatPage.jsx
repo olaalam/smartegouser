@@ -13,6 +13,7 @@ import { useGet } from "../hooks/useGet";
 import { usePost } from "../hooks/usePost";
 import { getWhatsAppConversations, getWhatsAppMessages } from "../api/whatsappApi";
 import { getEcho } from "../api/echoService";
+import { publishActiveChat, publishChatRead } from "../utils/chatUnreadEvents";
 import { formatAvailableMessages, hasChatAccess } from "../utils/chatAccess";
 import { localizeApiLabel } from "../utils/localization";
 
@@ -186,10 +187,23 @@ export default function WhatsAppChatPage({ embedded = false }) {
   const convReqRef = useRef(0);         // بيتجاهل الردود القديمة (race conditions)
   const msgReqRef = useRef(0);
 
+  useEffect(() => {
+    publishActiveChat(selectedConv ? {
+      channel: "whatsapp",
+      accountId: selectedNumberId,
+      senderId: selectedConv.phone,
+    } : null);
+    return () => publishActiveChat(null);
+  }, [selectedNumberId, selectedConv?.phone]);
+
   // ── mark-as-read (usePost) ───────────────────────────────────────────────────
   const markRead = (numberId, phone) => {
     if (!hasChatAccess(numbers.find((number) => number.id === numberId))) return;
-    return readPost(MARK_READ_URL, { channel: "whatsapp", whats_item_id: numberId, phone });
+    return readPost(MARK_READ_URL, { channel: "whatsapp", whats_item_id: numberId, phone })
+      .then((result) => {
+        if (result.success) publishChatRead();
+        return result;
+      });
   };
   const markReadRef = useRef(markRead);
   markReadRef.current = markRead; // الـ listener بتاع Echo يستخدم آخر نسخة

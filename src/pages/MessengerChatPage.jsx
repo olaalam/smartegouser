@@ -23,6 +23,7 @@ import {
   markMessengerRead,
 } from "../api/messengerApi";
 import { getEcho } from "../api/echoService";
+import { publishActiveChat, publishChatRead } from "../utils/chatUnreadEvents";
 import { formatAvailableMessages, hasChatAccess } from "../utils/chatAccess";
 import { localizeApiLabel } from "../utils/localization";
 
@@ -122,6 +123,15 @@ export default function MessengerChatPage({ embedded = false }) {
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
   const echoChannelRef = useRef(null);
+
+  useEffect(() => {
+    publishActiveChat(selectedConv ? {
+      channel: "messenger",
+      accountId: selectedPage?.page_id,
+      senderId: selectedConv.sender_id,
+    } : null);
+    return () => publishActiveChat(null);
+  }, [selectedPage?.page_id, selectedConv?.sender_id]);
 
   // ── Load Pages ──────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -344,7 +354,9 @@ export default function MessengerChatPage({ embedded = false }) {
               onClick={() => {
                 setSelectedConv(conv);
                 if (conv.unread_count > 0) {
-                  markMessengerRead({ page_id: selectedPage.page_id, sender_id: conv.sender_id , channel : 'messenger' }).catch(console.error);
+                  markMessengerRead({ page_id: selectedPage.page_id, sender_id: conv.sender_id , channel : 'messenger' })
+                    .then(publishChatRead)
+                    .catch(console.error);
                   setConversations((prev) =>
                     prev.map((c) => (c.sender_id === conv.sender_id ? { ...c, unread_count: 0 } : c))
                   );
