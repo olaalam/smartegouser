@@ -1,11 +1,15 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { Link2 } from "lucide-react";
 import { toast } from "sonner";
+import axiosInstance from "../api/axiosInstance";
+import { setAuth, saveAuthToStorage } from "../redux/slices/authSlice";
+import { API_ENDPOINTS } from "../utils/constants";
 
 // App ID الخاص بفيسبوك
 const FB_APP_ID = import.meta.env.VITE_FB_APP_ID || "1522838669646043";
+const FACEBOOK_AUTH_URL = `https://bcknd.smartego.org/api/${API_ENDPOINTS.AUTH.FACEBOOK}`;
 
 // شعار فيسبوك الرسمي (SVG)
 const FacebookIcon = (props) => (
@@ -91,6 +95,7 @@ function ConnectionCard({ icon: Icon, title, type, description, accent, onConnec
 
 export default function ConnectManagerPage() {
   const lang = useSelector((state) => state.ui.lang);
+  const dispatch = useDispatch();
   const isRTL = lang === "ar";
   const t = COPY[lang] ?? COPY.en;
   const navigate = useNavigate();
@@ -121,25 +126,24 @@ export default function ConnectManagerPage() {
   // دالة إرسال الـ access_token إلى API الخادم
   const sendFacebookTokenToBackend = useCallback(async (accessToken) => {
     try {
-      const response = await fetch("https://bcknd.smartego.org/api/auth/facebook", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ access_token: accessToken }),
+      const response = await axiosInstance.post(FACEBOOK_AUTH_URL, {
+        access_token: accessToken,
       });
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(data.message || t.facebookConnectFailed);
-      console.log("تمت عملية الربط بنجاح:", data);
+      const authData = response.data?.data ?? response.data;
+
+      if (authData?.token) {
+        saveAuthToStorage(authData);
+        dispatch(setAuth(authData));
+      }
 
       navigate("/fb-pages");
     } catch (err) {
       console.error("حدث خطأ أثناء عملية الربط مع الفيسبوك:", err);
-      toast.error(err.message || t.facebookConnectFailed);
+      toast.error(err.response?.data?.message || err.message || t.facebookConnectFailed);
     } finally {
       setLoadingFb(false);
     }
-  }, [navigate, t.facebookConnectFailed]);
+  }, [dispatch, navigate, t.facebookConnectFailed]);
 
   useEffect(() => {
     const accessToken = new URLSearchParams(window.location.hash.slice(1)).get("access_token");
