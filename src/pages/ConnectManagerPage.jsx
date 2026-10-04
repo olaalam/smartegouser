@@ -43,6 +43,7 @@ const COPY = {
     whatsappType: "BUSINESS CHANNEL",
     connectHint: "Not connected",
     connectedHint: "Connected",
+    facebookConnectSuccess: "Facebook connected successfully!",
     facebookConnectFailed: "Could not connect Facebook. Please try again.",
   },
   ar: {
@@ -61,6 +62,7 @@ const COPY = {
     whatsappType: "قناة أعمال",
     connectHint: "غير متصلة",
     connectedHint: "متصلة",
+    facebookConnectSuccess: "تم ربط Facebook بنجاح!",
     facebookConnectFailed: "تعذر ربط Facebook. حاولي مرة أخرى.",
   },
 };
@@ -144,6 +146,7 @@ export default function ConnectManagerPage() {
         dispatch(setAuth(authData));
       }
 
+      toast.success(t.facebookConnectSuccess);
       navigate("/fb-pages");
     } catch (err) {
       console.error("حدث خطأ أثناء عملية الربط مع الفيسبوك:", err);
@@ -151,7 +154,7 @@ export default function ConnectManagerPage() {
     } finally {
       setLoadingFb(false);
     }
-  }, [dispatch, navigate, t.facebookConnectFailed]);
+  }, [dispatch, navigate, t.facebookConnectFailed, t.facebookConnectSuccess]);
 
   useEffect(() => {
     const accessToken = new URLSearchParams(window.location.hash.slice(1)).get("access_token");
