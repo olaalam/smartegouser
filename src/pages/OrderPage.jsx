@@ -145,19 +145,28 @@ export default function OrderPage() {
   const requestedPageId = searchParams.get("pageId");
   const selectedPage = selectedPageOverride ?? pages.find((page) => String(page.page_id) === requestedPageId) ?? null;
 
-  const handleSubmit = async () => {
-    if (!selectedPkg || !selectedPage) return;
-    const result = await submitOrder(API_ENDPOINTS.MESSENGER.ORDERS, {
-      page_id:    selectedPage.page_id,
-      package_id: selectedPkg.id,
-    });
-    if (result.success) {
-      toast.success(t.successOrder);
-      navigate("/dashboard", { replace: true });
-    } else {
-      toast.error(result.error || t.failOrder);
-    }
-  };
+const handleSubmit = async () => {
+  if (!selectedPkg || !selectedPage) return;
+  const result = await submitOrder(API_ENDPOINTS.MESSENGER.ORDERS, {
+    page_id:    selectedPage.page_id,
+    package_id: selectedPkg.id,
+  });
+
+  if (!result.success) {
+    toast.error(result.error || t.failOrder);
+    return;
+  }
+
+  const order = result.data?.data ?? result.data; // عدّليها حسب اللي usePost بيرجّعه
+  const paymentUrl = order?.payment_url || order?.paymob_url;
+  if (!paymentUrl) {
+    toast.error(t.failOrder);
+    return;
+  }
+
+  sessionStorage.setItem("pendingPaymentPageId", String(order.page_id ?? selectedPage.page_id));
+  window.location.href = paymentUrl; // مش navigate، لأنها صفحة برا الـ React app
+};
 
   if (pkgsLoading && pagesLoading) {
     return (

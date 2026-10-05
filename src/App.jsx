@@ -17,6 +17,7 @@ import InstagramPageManagePage from "./pages/InstagramPageManagePage";
 import AppLayout from "./components/layout/AppLayout";
 import UserOrdersPage from "./pages/UserOrdersPage";
 import ChatsPage from "./pages/ChatsPage";
+import PaymentResultPage from "./pages/PaymentResultPage";
 
 // ─── Route guards ─────────────────────────────────────────────────────────────
 
@@ -123,6 +124,7 @@ export default function App() {
           path="/instagram-subscription"
           element={<PrivateRoute><AppLayout><InstagramSubscriptionPage /></AppLayout></PrivateRoute>}
         />
+        <Route path="/payment/result" element={<PaymentResultPage />} />
 
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
