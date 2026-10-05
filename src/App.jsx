@@ -6,6 +6,7 @@ import DashboardPage      from "./pages/DashboardPage";
 import OrderPage          from "./pages/OrderPage";
 import ProfilePage        from "./pages/ProfilePage";
 import WhatsAppPage       from "./pages/WhatsAppWizard";
+import DirectWhatsAppPage from "./pages/directWhats";
 import MessengerChatPage  from "./pages/MessengerChatPage";
 import WhatsAppChatPage   from "./pages/WhatsAppChatPage";
 import InstagramChatPage from "./pages/InstagramChatPage";
@@ -98,6 +99,11 @@ export default function App() {
         <Route
           path="/whatsapp"
           element={<PrivateRoute><AppLayout><WhatsAppPage /></AppLayout></PrivateRoute>}
+        />
+
+        <Route
+          path="/direct-whatsapp"
+          element={<PrivateRoute><AppLayout><DirectWhatsAppPage /></AppLayout></PrivateRoute>}
         />
 
         <Route

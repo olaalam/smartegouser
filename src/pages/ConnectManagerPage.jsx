@@ -230,30 +230,30 @@ export default function ConnectManagerPage() {
           </div>
 
           <div className="grid items-stretch gap-4 lg:grid-cols-2">
-            {/* Facebook Card */}
-            <ConnectionCard
-              title="Facebook"
-              type={t.facebookType}
-              description={t.messengerDescription}
-              icon={FacebookIcon}
-              accent="#0866ff"
-              connectLabel={loadingFb ? t.connecting : facebookConnected ? t.manage : t.facebookConnect}
-              connectHint={facebookConnected ? t.connectedHint : t.connectHint}
-              onConnect={facebookConnected ? () => navigate("/fb-pages") : handleFacebookConnect}
-              loading={loadingFb}
-            />
+{/* Facebook Card */}
+<ConnectionCard
+  title="Facebook"
+  type={t.facebookType}
+  description={t.messengerDescription}
+  icon={FacebookIcon}
+  accent="#0866ff"
+  connectLabel={loadingFb ? t.connecting : t.facebookConnect}
+  connectHint={facebookConnected ? t.connectedHint : t.connectHint}
+  onConnect={handleFacebookConnect}
+  loading={loadingFb}
+/>
 
-            {/* WhatsApp Card */}
-            <ConnectionCard
-              title="WhatsApp"
-              type={t.whatsappType}
-              description={t.whatsappDescription}
-              icon={WhatsappIcon}
-              accent="#25D366"
-              connectLabel={whatsappConnected ? t.manage : t.whatsappConnect}
-              connectHint={whatsappConnected ? t.connectedHint : t.connectHint}
-              onConnect={() => navigate("/whatsapp")}
-            />
+{/* WhatsApp Card */}
+<ConnectionCard
+  title="WhatsApp"
+  type={t.whatsappType}
+  description={t.whatsappDescription}
+  icon={WhatsappIcon}
+  accent="#25D366"
+  connectLabel={t.whatsappConnect}
+  connectHint={whatsappConnected ? t.connectedHint : t.connectHint}
+  onConnect={() => navigate("/whatsapp")}
+/>
           </div>
         </section>
       </div>

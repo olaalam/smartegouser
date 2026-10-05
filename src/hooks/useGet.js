@@ -31,10 +31,12 @@ export const useGet = (url, params = {}, options = {}) => {
           ...options,
         });
         setData(response.data);
+        return response.data;
       } catch (err) {
         if (!axios.isCancel(err)) {
           setError(err.response?.data?.message || (lang === "ar" ? "فشل تحميل البيانات." : "Failed to load data."));
         }
+        return null;
       } finally {
         setLoading(false);
       }

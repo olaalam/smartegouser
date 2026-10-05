@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { toast } from "sonner";
-import { CheckCircle2, Pencil, Plus, Smartphone, Trash2, Upload, X } from "lucide-react";
+import { CheckCircle2, Loader2, Pencil, Plus, Send, Smartphone, Trash2, Upload, X } from "lucide-react";
 import { useDelete } from "../../hooks/useDelete";
 import { useMutation } from "../../hooks/useMutation";
 import { usePost } from "../../hooks/usePost";
 import { API_ENDPOINTS } from "../../utils/constants";
+import { hasChatAccess } from "../../utils/chatAccess";
 import Loader from "../common/Loader";
 import SectionCard from "../ui/SectionCard";
 
@@ -17,11 +18,13 @@ const inputClass = "w-full rounded-lg border border-[var(--border)] bg-[var(--ba
 const buttonClass = "inline-flex items-center justify-center gap-2 rounded-lg border border-[var(--border)] px-3 py-2 text-sm font-medium text-[var(--foreground)] transition-colors hover:bg-[var(--muted)] disabled:cursor-not-allowed disabled:opacity-50";
 const sectionHeadingClass = "text-sm font-semibold text-[var(--foreground)]";
 
-function makePayload(form, lang) {
+function makePayload(form, lang, directMode) {
   const payload = new FormData();
   Object.entries(form).forEach(([key, value]) => {
     if (key === "auto_request_code") {
-      payload.append(key, value ? "1" : "0");
+      payload.append(key, !directMode && value ? "1" : "0");
+    } else if (key === "code_method" && directMode) {
+      return;
     } else if (key !== "ai_file" && key !== "ai_file_value" && value !== null && value !== undefined) {
       payload.append(key, String(value));
     }
@@ -65,7 +68,7 @@ function FileField({ label, fileName, onChange, chooseLabel, emptyLabel }) {
   );
 }
 
-export default function WhatsAppNumbersStep({ items, loading, error, refetch, lang, isRTL, t, onCreated }) {
+export default function WhatsAppNumbersStep({ items, loading, error, refetch, lang, isRTL, t, onCreated, directMode = false, onSubscribe, subscribingId }) {
   const [form, setForm] = useState({ ...EMPTY_FORM });
   const [editingId, setEditingId] = useState(null);
   const [formOpen, setFormOpen] = useState(false);
@@ -98,7 +101,7 @@ export default function WhatsAppNumbersStep({ items, loading, error, refetch, la
       website_url: form.website_url || null,
       ai_context: form.ai_context || null,
       ai_file: form.ai_file_value || null,
-    } : makePayload(form, lang);
+    } : makePayload(form, lang, directMode);
     const result = isEditing
       ? await updateItem(`${API_ENDPOINTS.WHATSAPP.ITEMS}/${editingId}`, "PUT", payload)
       : await createItem(API_ENDPOINTS.WHATSAPP.ITEMS, payload, { headers: { "Content-Type": "multipart/form-data" } });
@@ -108,8 +111,14 @@ export default function WhatsAppNumbersStep({ items, loading, error, refetch, la
     }
     toast.success(isEditing ? t.editSuccess : t.addSuccess);
     resetForm();
-    await refetch();
-    if (!isEditing) onCreated?.(createdPhone, autoRequestCode);
+    const refreshedData = await refetch();
+    if (!isEditing && directMode) {
+      const refreshedItems = refreshedData?.data ?? [];
+      const createdResponseItem = result.data?.data?.id ? result.data.data : result.data?.id ? result.data : null;
+      const createdItem = refreshedItems.find((item) => String(item.phone) === String(createdPhone)) ?? createdResponseItem;
+      if (createdItem?.id) await onCreated?.(createdItem);
+      else toast.error(t.subscribeFailed);
+    } else if (!isEditing) onCreated?.(createdPhone, autoRequestCode);
   };
 
   const editItem = (item) => {
@@ -166,6 +175,14 @@ export default function WhatsAppNumbersStep({ items, loading, error, refetch, la
                   </span>
                 </div>
                 <div className="flex justify-end gap-2">
+                  {directMode && !hasChatAccess(item) && (
+                    <button type="button" disabled={subscribingId === item.id} onClick={() => onSubscribe?.(item)} className={buttonClass}>
+                      {subscribingId === item.id
+                        ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                        : <Send className="h-4 w-4" aria-hidden="true" />}
+                      {subscribingId === item.id ? t.subscribing : t.subscribe}
+                    </button>
+                  )}
                   <button type="button" onClick={() => editItem(item)} className={buttonClass} aria-label={t.edit}>
                     <Pencil className="h-4 w-4" aria-hidden="true" />
                   </button>
@@ -260,27 +277,6 @@ export default function WhatsAppNumbersStep({ items, loading, error, refetch, la
                     </label>
                   )}
                 </div>
-
-                {!editingId && (
-                  <div className="space-y-3 border-t border-[var(--border)] pt-5">
-                    <p className={sectionHeadingClass}>{t.verificationHeading}</p>
-                    <label className="space-y-1.5 text-sm font-medium text-[var(--foreground)]">
-                      <span>{t.codeMethod}</span>
-                      <CodeMethodControl value={form.code_method} t={t}
-                        onChange={(value) => setForm((current) => ({ ...current, code_method: value }))} />
-                    </label>
-                    <label className="flex items-start justify-between gap-4 rounded-lg border border-[var(--border)] bg-[var(--muted)]/30 p-4">
-                      <div>
-                        <p className="text-sm font-medium text-[var(--foreground)]">{t.autoRequest}</p>
-                        <p className="mt-0.5 text-xs text-[var(--muted-foreground)]">
-                          {t.autoRequestHint}
-                        </p>
-                      </div>
-                      <input type="checkbox" className="mt-1 h-5 w-5 shrink-0 accent-[var(--primary)]" checked={form.auto_request_code}
-                        onChange={(event) => setForm((current) => ({ ...current, auto_request_code: event.target.checked }))} />
-                    </label>
-                  </div>
-                )}
 
                 <div className="flex flex-wrap gap-2 border-t border-[var(--border)] pt-5">
                   <button type="submit" disabled={creating || updating}

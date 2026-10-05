@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import {
   MessageSquare,
   MessageCircle,
+  Send,
   TrendingUp,
   Infinity,
   CalendarDays,
@@ -36,6 +37,7 @@ const T = {
     overview:       "Here's your Messenger auto-reply overview",
     newSub:         "New Subscription",
     whatsApp:       "WhatsApp numbers",
+    directWhatsApp: "Direct WhatsApp",
     filterDate:     "Filter by date",
     filtered:       (f, t) => `Filtered: ${f} → ${t}`,
     from:           "From",
@@ -272,6 +274,12 @@ export default function DashboardPage() {
               className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold border border-[var(--border)] text-[var(--foreground)] bg-[var(--card)] hover:bg-[var(--muted)] transition-colors">
               <MessageCircle className="w-4 h-4" aria-hidden="true" />
               {t.whatsApp}
+            </button>
+            <button type="button" onClick={() => navigate("/direct-whatsapp")}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-white shadow-sm transition-all duration-150 active:scale-95"
+              style={{ background: "#008069" }}>
+              <Send className="w-4 h-4" aria-hidden="true" />
+              {lang === "ar" ? "واتساب مباشر" : t.directWhatsApp}
             </button>
             <button type="button" onClick={() => navigate("/order")}
               className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-[var(--primary-foreground)] shadow-sm transition-all duration-150 active:scale-95"

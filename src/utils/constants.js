@@ -33,5 +33,6 @@ export const API_ENDPOINTS = {
     AI_DATA:  "user/whats/ai_data",
     PACKAGES: "user/whats/packages",
     ORDERS:   "user/whats/orders",
+    DIRECT_SUBSCRIPTION: "https://bcknd.smartego.org/api/user/whats/directSubscription",
   },
 };
