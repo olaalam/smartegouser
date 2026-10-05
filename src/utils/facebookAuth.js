@@ -30,11 +30,18 @@ export function initFacebookSDK() {
 
 const FB_SCOPE = [
   "public_profile",
-  "email",
   "pages_show_list",
+  "pages_messaging",
   "pages_read_engagement",
   "pages_manage_metadata",
-  "pages_messaging",
+  "pages_manage_engagement",
+  "pages_read_user_content",
+  "instagram_basic",
+  "instagram_manage_messages",
+  "instagram_manage_comments",
+  "instagram_manage_engagement",
+  "whatsapp_business_management",
+  "whatsapp_business_messaging",
 ].join(",");
 
 /**

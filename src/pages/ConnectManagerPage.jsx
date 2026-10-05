@@ -168,24 +168,24 @@ export default function ConnectManagerPage() {
   const handleFacebookConnect = () => {
     setLoadingFb(true);
 
-    if (window.FB) {
-      window.FB.login(
-        (response) => {
-          if (response.authResponse?.accessToken) {
-            sendFacebookTokenToBackend(response.authResponse.accessToken);
-          } else {
-            setLoadingFb(false);
-          }
-        },
-        { scope: "pages_show_list,pages_messaging,public_profile" }
-      );
-    } else {
-      const redirectUri = `${window.location.origin}/connect-manager`;
-      const fbUrl = `https://www.facebook.com/v18.0/dialog/oauth?client_id=${FB_APP_ID}&redirect_uri=${encodeURIComponent(
-        redirectUri
-      )}&scope=pages_show_list,pages_messaging,public_profile&response_type=token`;
-      window.location.href = fbUrl;
-    }
+if (window.FB) {
+  window.FB.login(
+    (response) => {
+      if (response.authResponse?.accessToken) {
+        sendFacebookTokenToBackend(response.authResponse.accessToken);
+      } else {
+        setLoadingFb(false);
+      }
+    },
+    { scope: FB_SCOPE }
+  );
+} else {
+  const redirectUri = `${window.location.origin}/connect-manager`;
+  const fbUrl = `https://www.facebook.com/v18.0/dialog/oauth?client_id=${FB_APP_ID}&redirect_uri=${encodeURIComponent(
+    redirectUri
+  )}&scope=${encodeURIComponent(FB_SCOPE)}&response_type=token`;
+  window.location.href = fbUrl;
+}
   };
 
   return (
