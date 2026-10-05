@@ -12,6 +12,23 @@ import { isChannelConnected, saveChannelConnection } from "../utils/channelConne
 const FB_APP_ID = import.meta.env.VITE_FB_APP_ID || "1522838669646043";
 const FACEBOOK_AUTH_URL = `https://bcknd.smartego.org/api/${API_ENDPOINTS.AUTH.FACEBOOK}`;
 
+// قائمة الصلاحيات المطلوبة للربط
+const FB_SCOPE = [
+  "public_profile",
+  "pages_show_list",
+  "pages_messaging",
+  "pages_read_engagement",
+  "pages_manage_metadata",
+  "pages_manage_engagement",
+  "pages_read_user_content",
+  "instagram_basic",
+  "instagram_manage_messages",
+  "instagram_manage_comments",
+  "instagram_manage_engagement",
+  "whatsapp_business_management",
+  "whatsapp_business_messaging",
+].join(",");
+
 // شعار فيسبوك الرسمي (SVG)
 const FacebookIcon = (props) => (
   <svg viewBox="0 0 24 24" fill="currentColor" {...props}>
@@ -71,9 +88,7 @@ function ConnectionCard({ icon: Icon, title, type, description, accent, onConnec
   return (
     <article className="group flex h-full min-w-0 flex-col rounded-xl border border-[var(--border)] bg-[var(--card)] p-5 transition-colors hover:border-[var(--primary)]/40">
       <div className="flex items-start gap-4">
-          <span
-            className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border border-[var(--border)] bg-[var(--background)]"
-          >
+          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border border-[var(--border)] bg-[var(--background)]">
             <Icon className="h-5 w-5" style={{ color: accent }} aria-hidden="true" />
           </span>
           <div className="min-w-0 flex-1 pt-0.5">
@@ -168,24 +183,24 @@ export default function ConnectManagerPage() {
   const handleFacebookConnect = () => {
     setLoadingFb(true);
 
-if (window.FB) {
-  window.FB.login(
-    (response) => {
-      if (response.authResponse?.accessToken) {
-        sendFacebookTokenToBackend(response.authResponse.accessToken);
-      } else {
-        setLoadingFb(false);
-      }
-    },
-    { scope: FB_SCOPE }
-  );
-} else {
-  const redirectUri = `${window.location.origin}/connect-manager`;
-  const fbUrl = `https://www.facebook.com/v18.0/dialog/oauth?client_id=${FB_APP_ID}&redirect_uri=${encodeURIComponent(
-    redirectUri
-  )}&scope=${encodeURIComponent(FB_SCOPE)}&response_type=token`;
-  window.location.href = fbUrl;
-}
+    if (window.FB) {
+      window.FB.login(
+        (response) => {
+          if (response.authResponse?.accessToken) {
+            sendFacebookTokenToBackend(response.authResponse.accessToken);
+          } else {
+            setLoadingFb(false);
+          }
+        },
+        { scope: FB_SCOPE }
+      );
+    } else {
+      const redirectUri = `${window.location.origin}/connect-manager`;
+      const fbUrl = `https://www.facebook.com/v18.0/dialog/oauth?client_id=${FB_APP_ID}&redirect_uri=${encodeURIComponent(
+        redirectUri
+      )}&scope=${encodeURIComponent(FB_SCOPE)}&response_type=token`;
+      window.location.href = fbUrl;
+    }
   };
 
   return (
