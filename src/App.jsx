@@ -36,7 +36,7 @@ function PublicRoute({ children }) {
 
 export default function App() {
   return (
-    <BrowserRouter>
+    <BrowserRouter basename="/user"> 
       <Toaster
         position="top-center"
         richColors
