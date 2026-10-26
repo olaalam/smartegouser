@@ -207,6 +207,7 @@ export default function AppLayout({ children }) {
       itemKey: (item) => `whatsapp:${item.id}`,
     },
   ].filter(({ items }) => items.length > 0);
+  const activeChatChannel = new URLSearchParams(location.search).get("channel") || "messenger";
   const getUnreadCount = (itemKey, baseValue) => {
     const realtimeDelta = unreadUpdates.response === allChatsResponse
       ? unreadUpdates.deltas[itemKey] ?? 0
@@ -279,7 +280,7 @@ export default function AppLayout({ children }) {
             )}
             {chatChannels.map(({ id, to, label, icon: Icon, items, itemLabel, itemTo, itemKey }) => {
               const active = location.pathname === "/chats"
-                && new URLSearchParams(location.search).get("channel") === id;
+                && activeChatChannel === id;
               const channelUnread = items.reduce((total, item) => total + getUnreadCount(itemKey(item), item.unread_count), 0);
               return (
                 <div key={to}>
