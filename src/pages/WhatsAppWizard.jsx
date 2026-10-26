@@ -41,17 +41,13 @@ export default function WhatsAppWizard() {
   const t = T[lang] ?? T.en;
   const isRTL = lang === "ar";
   const [step, setStep] = useState(null);
-  const [autoRequestPhone, setAutoRequestPhone] = useState("");
   const { data, loading, error, refetch } = useGet(API_ENDPOINTS.WHATSAPP.ITEMS);
   const items = data?.data ?? [];
   const hasVerifiedNumber = items.some((item) => Boolean(item.phone_verified_at));
   const requestedPackageStep = searchParams.get("step") === "package";
   const currentStep = step ?? (requestedPackageStep && hasVerifiedNumber ? 3 : 1);
   const steps = [t.steps.numbers, t.steps.verification, t.steps.package];
-  const handleCreated = (phone, autoRequestCode) => {
-    setAutoRequestPhone(autoRequestCode ? phone : "");
-    setStep(2);
-  };
+  const handleCreated = () => setStep(2);
 
   return (
     <div className="min-h-screen bg-[var(--background)]" dir={isRTL ? "rtl" : "ltr"}>
@@ -91,7 +87,7 @@ export default function WhatsAppWizard() {
                   </>
                 )}
                 {currentStep === 2 && <WhatsAppVerificationStep items={items} loading={loading} error={error} refetch={refetch}
-                  lang={lang} t={t.verification} autoRequestPhone={autoRequestPhone} />}
+                  t={t.verification} />}
                 {currentStep === 3 && <WhatsAppPackageStep items={items} lang={lang} t={t.package} />}
                 <StepNavigation step={currentStep} setStep={setStep}
                   canContinue={currentStep === 1 ? items.length > 0 : hasVerifiedNumber}

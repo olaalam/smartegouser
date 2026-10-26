@@ -12,19 +12,17 @@ import SectionCard from "../ui/SectionCard";
 
 const EMPTY_FORM = {
   phone: "", verified_name: "", android_link: "", ios_link: "", website_url: "",
-  auto_request_code: true, code_method: "SMS", ai_context: "", ai_file: null, ai_file_value: "",
+  auto_request_code: false, ai_context: "", ai_file: null, ai_file_value: "",
 };
 const inputClass = "w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm text-[var(--foreground)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]";
 const buttonClass = "inline-flex items-center justify-center gap-2 rounded-lg border border-[var(--border)] px-3 py-2 text-sm font-medium text-[var(--foreground)] transition-colors hover:bg-[var(--muted)] disabled:cursor-not-allowed disabled:opacity-50";
 const sectionHeadingClass = "text-sm font-semibold text-[var(--foreground)]";
 
-function makePayload(form, lang, directMode) {
+function makePayload(form, lang) {
   const payload = new FormData();
   Object.entries(form).forEach(([key, value]) => {
     if (key === "auto_request_code") {
-      payload.append(key, !directMode && value ? "1" : "0");
-    } else if (key === "code_method" && directMode) {
-      return;
+      payload.append(key, value ? "1" : "0");
     } else if (key !== "ai_file" && key !== "ai_file_value" && value !== null && value !== undefined) {
       payload.append(key, String(value));
     }
@@ -32,25 +30,6 @@ function makePayload(form, lang, directMode) {
   payload.append("language", lang);
   if (form.ai_file instanceof File) payload.append("ai_file", form.ai_file);
   return payload;
-}
-
-function CodeMethodControl({ value, onChange, t }) {
-  const options = [
-    { value: "SMS", label: t.sms },
-    { value: "VOICE", label: t.voice },
-  ];
-  return (
-    <div className="inline-flex w-full rounded-lg border border-[var(--border)] p-1 sm:w-auto">
-      {options.map((option) => (
-        <button type="button" key={option.value} onClick={() => onChange(option.value)}
-          className={`flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors sm:flex-none ${
-            value === option.value ? "bg-[var(--primary)] text-[var(--primary-foreground)]" : "text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
-          }`}>
-          {option.label}
-        </button>
-      ))}
-    </div>
-  );
 }
 
 function FileField({ label, fileName, onChange, chooseLabel, emptyLabel }) {
@@ -96,14 +75,13 @@ export default function WhatsAppNumbersStep({ items, loading, error, refetch, la
     event.preventDefault();
     const isEditing = Boolean(editingId);
     const createdPhone = form.phone;
-    const autoRequestCode = form.auto_request_code;
     const payload = isEditing ? {
       android_link: form.android_link || null,
       ios_link: form.ios_link || null,
       website_url: form.website_url || null,
       ai_context: form.ai_context || null,
       ai_file: form.ai_file_value || null,
-    } : makePayload(form, lang, directMode);
+    } : makePayload(form, lang);
     const result = isEditing
       ? await updateItem(`${API_ENDPOINTS.WHATSAPP.ITEMS}/${editingId}`, "PUT", payload)
       : await createItem(API_ENDPOINTS.WHATSAPP.ITEMS, payload, { headers: { "Content-Type": "multipart/form-data" } });
@@ -120,7 +98,7 @@ export default function WhatsAppNumbersStep({ items, loading, error, refetch, la
       const createdItem = refreshedItems.find((item) => String(item.phone) === String(createdPhone)) ?? createdResponseItem;
       if (createdItem?.id) await onCreated?.(createdItem);
       else toast.error(t.subscribeFailed);
-    } else if (!isEditing) onCreated?.(createdPhone, autoRequestCode);
+    } else if (!isEditing) onCreated?.(createdPhone);
   };
 
   const editItem = (item) => {

@@ -1,7 +1,7 @@
 const T = {
   en: {
     title: "WhatsApp setup",
-    subtitle: "Connect and verify a WhatsApp number, then choose a package.",
+    subtitle: "Connect and register a WhatsApp number, then choose a package.",
     steps: { numbers: "Number", verification: "Verification", package: "Package" },
     common: { back: "Back", next: "Continue", retry: "Retry", loading: "Loading…", error: "Something went wrong. Please try again." },
     numbers: {
@@ -18,12 +18,11 @@ const T = {
       loadError: "Could not load WhatsApp numbers.", loading: "Loading WhatsApp numbers…", retry: "Retry",
     },
     verification: {
-      title: "Verify your numbers", verified: "Verified", unverified: "Not verified", requestCode: "Send code", resendCode: "Resend code",
-      codeMethod: "Delivery method", sms: "SMS", voice: "Voice call", code: "Verification code", pin: "Two-step PIN",
-      verify: "Verify and register", sync: "Sync Meta status", syncing: "Syncing…", codeSent: "Verification code requested.",
-      verifiedSuccess: "Number verified and registered.", syncSuccess: "Meta status synced.", requestError: "Could not request verification code.",
-      noNumbers: "Add a WhatsApp number in the first step.", noCodeRequested: "Request a code before entering verification details.",
-      loading: "Loading WhatsApp numbers…", error: "Could not complete verification.", resendIn: "Resend in",
+      title: "Register your numbers", verified: "Verified", unverified: "Not registered", pin: "Two-step PIN (if requested)",
+      register: "Register number", sync: "Sync Meta status", syncing: "Syncing…",
+      verifiedSuccess: "Number registered successfully.", syncSuccess: "Meta status synced.",
+      noNumbers: "Add a WhatsApp number in the first step.",
+      loading: "Loading WhatsApp numbers…", error: "Could not register the number.",
     },
     package: {
       title: "Choose a WhatsApp package", chooseNumber: "Verified number", choosePackage: "Package", order: "Place package order",
@@ -34,7 +33,7 @@ const T = {
   },
   ar: {
     title: "إعداد واتساب",
-    subtitle: "أضف رقم واتساب وتحقق منه، ثم اختر الباقة المناسبة.",
+    subtitle: "أضف رقم واتساب وسجّله، ثم اختر الباقة المناسبة.",
     steps: { numbers: "الرقم", verification: "التحقق", package: "الباقة" },
     common: { back: "رجوع", next: "متابعة", retry: "إعادة المحاولة", loading: "جاري التحميل…", error: "حدث خطأ. حاول مرة أخرى." },
     numbers: {
@@ -51,12 +50,11 @@ const T = {
       loadError: "تعذر تحميل أرقام واتساب.", loading: "جاري تحميل أرقام واتساب…", retry: "إعادة المحاولة",
     },
     verification: {
-      title: "التحقق من أرقامك", verified: "تم التحقق", unverified: "لم يتم التحقق", requestCode: "إرسال الكود", resendCode: "إعادة إرسال الكود",
-      codeMethod: "طريقة الإرسال", sms: "رسالة نصية", voice: "مكالمة صوتية", code: "كود التحقق", pin: "رمز PIN للتحقق بخطوتين",
-      verify: "تحقق وسجّل الرقم", sync: "مزامنة حالة Meta", syncing: "جاري المزامنة…", codeSent: "تم طلب كود التحقق.",
-      verifiedSuccess: "تم التحقق من الرقم وتسجيله.", syncSuccess: "تمت مزامنة حالة Meta.", requestError: "تعذر طلب كود التحقق.",
-      noNumbers: "أضف رقم واتساب في الخطوة الأولى.", noCodeRequested: "اطلب كود التحقق أولاً.",
-      loading: "جاري تحميل أرقام واتساب…", error: "تعذر إكمال التحقق.", resendIn: "إعادة الإرسال خلال",
+      title: "تسجيل أرقامك", verified: "تم التحقق", unverified: "لم يتم التسجيل", pin: "رمز PIN للتحقق بخطوتين (إن طُلب)",
+      register: "تسجيل الرقم", sync: "مزامنة حالة Meta", syncing: "جاري المزامنة…",
+      verifiedSuccess: "تم تسجيل الرقم بنجاح.", syncSuccess: "تمت مزامنة حالة Meta.",
+      noNumbers: "أضف رقم واتساب في الخطوة الأولى.",
+      loading: "جاري تحميل أرقام واتساب…", error: "تعذر تسجيل الرقم.",
     },
     package: {
       title: "اختيار باقة واتساب", chooseNumber: "الرقم المتحقق منه", choosePackage: "الباقة", order: "إرسال طلب الباقة",
