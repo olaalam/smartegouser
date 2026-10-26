@@ -9,7 +9,7 @@ const FACEBOOK_APP_ID =
 
 const WHATSAPP_SIGNUP_CONFIG_ID =
   import.meta.env.VITE_WHATSAPP_EMBEDDED_SIGNUP_CONFIG_ID ||
-  "1701412237601705";
+  "1122230804109701";
 
 export function initFacebookSDK() {
   return new Promise((resolve, reject) => {
@@ -90,7 +90,8 @@ export async function loginWithWhatsAppEmbeddedSignup() {
         extras: {
           setup: {},
           featureType: "",
-          sessionInfoVersion: "2",
+          sessionInfoVersion: "3",
+          version: "v4",
         },
       }
     );

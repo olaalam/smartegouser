@@ -10,9 +10,11 @@ VITE_FB_APP_ID=your_meta_app_id
 VITE_WHATSAPP_EMBEDDED_SIGNUP_CONFIG_ID=your_whatsapp_configuration_id
 ```
 
-The configuration ID defaults to the ID supplied for this integration if the
-environment variable is omitted. The Meta App must have WhatsApp Embedded Signup
-configured, and the site must meet Meta's domain and HTTPS requirements.
+The configuration ID defaults to `1122230804109701`, matching the Meta
+Embedded Signup configuration for this integration. The signup popup uses
+session info version `3` and flow version `v4`. Set the environment variable
+when using a different configuration. The Meta App must have WhatsApp Embedded
+Signup configured, and the site must meet Meta's domain and HTTPS requirements.
 
 After the popup returns its temporary authorization code, the frontend sends it
 to `POST /api/whats/embedded-signup`; the Laravel API exchanges it with Meta and
