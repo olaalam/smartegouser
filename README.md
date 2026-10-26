@@ -1,5 +1,26 @@
 # React + Vite
 
+## WhatsApp Embedded Signup
+
+The WhatsApp setup page supports Meta Embedded Signup. Configure the Meta App ID
+and WhatsApp Embedded Signup configuration ID in the frontend environment:
+
+```env
+VITE_FB_APP_ID=your_meta_app_id
+VITE_WHATSAPP_EMBEDDED_SIGNUP_CONFIG_ID=your_whatsapp_configuration_id
+```
+
+The configuration ID defaults to the ID supplied for this integration if the
+environment variable is omitted. The Meta App must have WhatsApp Embedded Signup
+configured, and the site must meet Meta's domain and HTTPS requirements.
+
+After the popup returns its temporary authorization code, the frontend sends it
+to `POST /api/whats/embedded-signup`; the Laravel API exchanges it with Meta and
+saves the connected number. The authenticated API must expose this route. Never
+put the Meta App Secret in frontend environment variables. Numbers connected
+through Embedded Signup can use the per-number “Reconnect auto-reply” action to
+call `POST /api/whats/items/{id}/resubscribe-webhook`.
+
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
 Currently, two official plugins are available:

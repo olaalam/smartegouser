@@ -34,5 +34,7 @@ export const API_ENDPOINTS = {
     PACKAGES: "user/whats/packages",
     ORDERS:   "user/whats/orders",
     DIRECT_SUBSCRIPTION: "https://bcknd.smartego.org/api/user/whats/directSubscription",
+    EMBEDDED_SIGNUP: "whats/embedded-signup",
+    RESUBSCRIBE_WEBHOOK: (id) => `whats/items/${encodeURIComponent(id)}/resubscribe-webhook`,
   },
 };

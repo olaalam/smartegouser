@@ -9,6 +9,7 @@ import WhatsAppNumbersStep from "../components/whatsapp/WhatsAppNumbersStep";
 import WhatsAppPackageStep from "../components/whatsapp/WhatsAppPackageStep";
 import WhatsAppStepBar from "../components/whatsapp/WhatsAppStepBar";
 import WhatsAppVerificationStep from "../components/whatsapp/WhatsAppVerificationStep";
+import WhatsAppEmbeddedSignupButton from "../components/whatsapp/WhatsAppEmbeddedSignupButton";
 import T from "./whatsAppTranslations";
 
 function StepNavigation({ step, setStep, canContinue, isRTL, t }) {
@@ -72,8 +73,23 @@ export default function WhatsAppWizard() {
             <AnimatePresence mode="wait">
               <motion.section key={currentStep} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.2 }} className="space-y-5">
-                {currentStep === 1 && <WhatsAppNumbersStep items={items} loading={loading} error={error} refetch={refetch}
-                  lang={lang} isRTL={isRTL} t={t.numbers} onCreated={handleCreated} />}
+                {currentStep === 1 && (
+                  <>
+                    <div className="flex justify-end">
+                      <WhatsAppEmbeddedSignupButton
+                        refetch={refetch}
+                        t={{
+                          label: t.numbers.embeddedSignup,
+                          connecting: t.numbers.embeddedSignupConnecting,
+                          success: t.numbers.embeddedSignupSuccess,
+                          error: t.numbers.embeddedSignupError,
+                        }}
+                      />
+                    </div>
+                    <WhatsAppNumbersStep items={items} loading={loading} error={error} refetch={refetch}
+                      lang={lang} isRTL={isRTL} t={t.numbers} onCreated={handleCreated} />
+                  </>
+                )}
                 {currentStep === 2 && <WhatsAppVerificationStep items={items} loading={loading} error={error} refetch={refetch}
                   lang={lang} t={t.verification} autoRequestPhone={autoRequestPhone} />}
                 {currentStep === 3 && <WhatsAppPackageStep items={items} lang={lang} t={t.package} />}

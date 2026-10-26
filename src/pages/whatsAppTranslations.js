@@ -6,6 +6,8 @@ const T = {
     common: { back: "Back", next: "Continue", retry: "Retry", loading: "Loading…", error: "Something went wrong. Please try again." },
     numbers: {
       title: "WhatsApp numbers", addNumber: "Add a number", editNumber: "Edit number", editingPhone: "Editing phone", save: "Add number", saveChanges: "Save changes", cancel: "Cancel",
+      embeddedSignup: "Connect with Meta", embeddedSignupConnecting: "Connecting…", embeddedSignupSuccess: "WhatsApp connected successfully.", embeddedSignupError: "Could not connect WhatsApp. Please try again.",
+      resubscribeWebhook: "Reconnect auto-reply", resubscribingWebhook: "Reconnecting…", resubscribeWebhookSuccess: "Auto-reply webhook reconnected.", resubscribeWebhookError: "Could not reconnect the auto-reply webhook.",
       linksHeading: "App & website links", aiHeading: "AI assistant", verificationHeading: "Verification",
       chooseFile: "Choose file", noFileChosen: "No file chosen", autoRequestHint: "We'll send the verification code right after this number is added.",
       phone: "Phone number", verifiedName: "Verified name", androidLink: "Android link", iosLink: "iOS link", websiteUrl: "Website URL",
@@ -37,6 +39,8 @@ const T = {
     common: { back: "رجوع", next: "متابعة", retry: "إعادة المحاولة", loading: "جاري التحميل…", error: "حدث خطأ. حاول مرة أخرى." },
     numbers: {
       title: "أرقام واتساب", addNumber: "إضافة رقم", editNumber: "تعديل الرقم", editingPhone: "تعديل بيانات الرقم", save: "إضافة الرقم", saveChanges: "حفظ التعديلات", cancel: "إلغاء",
+      embeddedSignup: "الربط عبر Meta", embeddedSignupConnecting: "جاري الربط…", embeddedSignupSuccess: "تم ربط واتساب بنجاح.", embeddedSignupError: "تعذر ربط واتساب. حاول مرة أخرى.",
+      resubscribeWebhook: "إعادة تفعيل الرد الآلي", resubscribingWebhook: "جاري إعادة التفعيل…", resubscribeWebhookSuccess: "تمت إعادة تفعيل webhook الرد الآلي.", resubscribeWebhookError: "تعذرت إعادة تفعيل webhook الرد الآلي.",
       linksHeading: "روابط التطبيقات والموقع", aiHeading: "مساعد الذكاء الاصطناعي", verificationHeading: "التحقق",
       chooseFile: "اختيار ملف", noFileChosen: "لم يتم اختيار ملف", autoRequestHint: "سنرسل رمز التحقق بعد إضافة الرقم مباشرةً.",
       phone: "رقم الهاتف", verifiedName: "الاسم المعتمد", androidLink: "رابط أندرويد", iosLink: "رابط iOS", websiteUrl: "رابط الموقع",

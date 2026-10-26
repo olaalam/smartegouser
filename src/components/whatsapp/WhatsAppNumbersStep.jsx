@@ -73,8 +73,10 @@ export default function WhatsAppNumbersStep({ items, loading, error, refetch, la
   const [editingId, setEditingId] = useState(null);
   const [formOpen, setFormOpen] = useState(false);
   const { execute: createItem, loading: creating } = usePost();
+  const { execute: resubscribeWebhook } = usePost();
   const { mutate: updateItem, loading: updating } = useMutation();
   const { remove: deleteItem, loading: deleting } = useDelete();
+  const [resubscribingId, setResubscribingId] = useState(null);
   const editingItem = items.find((item) => item.id === editingId);
   const hasItems = items.length > 0;
 
@@ -148,6 +150,17 @@ export default function WhatsAppNumbersStep({ items, loading, error, refetch, la
     refetch();
   };
 
+  const reconnectWebhook = async (item) => {
+    setResubscribingId(item.id);
+    const result = await resubscribeWebhook(API_ENDPOINTS.WHATSAPP.RESUBSCRIBE_WEBHOOK(item.id));
+    setResubscribingId(null);
+    if (!result.success || result.data?.status === false) {
+      toast.error(result.error || result.data?.message || t.resubscribeWebhookError);
+      return;
+    }
+    toast.success(result.data?.message || t.resubscribeWebhookSuccess);
+  };
+
   return (
     <div className="space-y-5">
       <SectionCard icon={Smartphone} title={t.title}>
@@ -175,6 +188,19 @@ export default function WhatsAppNumbersStep({ items, loading, error, refetch, la
                   </span>
                 </div>
                 <div className="flex justify-end gap-2">
+                  {String(item.token_type).toLowerCase() === "customer" && (
+                    <button
+                      type="button"
+                      disabled={resubscribingId === item.id}
+                      onClick={() => reconnectWebhook(item)}
+                      className={buttonClass}
+                    >
+                      {resubscribingId === item.id
+                        ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                        : <Smartphone className="h-4 w-4" aria-hidden="true" />}
+                      {resubscribingId === item.id ? t.resubscribingWebhook : t.resubscribeWebhook}
+                    </button>
+                  )}
                   {directMode && !hasChatAccess(item) && (
                     <button type="button" disabled={subscribingId === item.id} onClick={() => onSubscribe?.(item)} className={buttonClass}>
                       {subscribingId === item.id

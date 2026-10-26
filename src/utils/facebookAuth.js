@@ -2,8 +2,17 @@
  * Opens the Facebook OAuth popup and resolves with the access_token.
  * Relies on the Facebook JS SDK being loaded.
  */
+const FACEBOOK_APP_ID =
+  import.meta.env.VITE_FB_APP_ID ||
+  import.meta.env.VITE_FACEBOOK_APP_ID ||
+  "1522838669646043";
+
+const WHATSAPP_SIGNUP_CONFIG_ID =
+  import.meta.env.VITE_WHATSAPP_EMBEDDED_SIGNUP_CONFIG_ID ||
+  "1701412237601705";
+
 export function initFacebookSDK() {
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     if (window.FB) {
       resolve();
       return;
@@ -11,7 +20,7 @@ export function initFacebookSDK() {
 
     window.fbAsyncInit = function () {
       window.FB.init({
-        appId:   import.meta.env.VITE_FACEBOOK_APP_ID,
+        appId:   FACEBOOK_APP_ID,
         cookie:  true,
         xfbml:   false,
         version: "v21.0",
@@ -24,6 +33,7 @@ export function initFacebookSDK() {
     script.src      = "https://connect.facebook.net/en_US/sdk.js";
     script.async    = true;
     script.defer    = true;
+    script.onerror  = () => reject(new Error("Could not load the Facebook SDK."));
     document.head.appendChild(script);
   });
 }
@@ -59,6 +69,30 @@ export function loginWithFacebook() {
         }
       },
       { scope: FB_SCOPE }
+    );
+  });
+}
+
+/**
+ * Opens Meta's WhatsApp Embedded Signup popup and resolves with its one-time code.
+ * A null result means the user cancelled or did not complete signup.
+ */
+export async function loginWithWhatsAppEmbeddedSignup() {
+  await initFacebookSDK();
+
+  return new Promise((resolve) => {
+    window.FB.login(
+      (response) => resolve(response.authResponse?.code ?? null),
+      {
+        config_id: WHATSAPP_SIGNUP_CONFIG_ID,
+        response_type: "code",
+        override_default_response_type: true,
+        extras: {
+          setup: {},
+          featureType: "",
+          sessionInfoVersion: "2",
+        },
+      }
     );
   });
 }
