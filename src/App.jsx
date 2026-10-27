@@ -19,6 +19,7 @@ import AppLayout from "./components/layout/AppLayout";
 import UserOrdersPage from "./pages/UserOrdersPage";
 import ChatsPage from "./pages/ChatsPage";
 import PaymentResultPage from "./pages/PaymentResultPage";
+import TelegramConnectPage from "./pages/TelegramConnectPage";
 
 // ─── Route guards ─────────────────────────────────────────────────────────────
 
@@ -64,6 +65,11 @@ export default function App() {
         <Route
           path="/connect-manager"
           element={<PrivateRoute><AppLayout><ConnectManagerPage /></AppLayout></PrivateRoute>}
+        />
+
+        <Route
+          path="/telegram-connect"
+          element={<PrivateRoute><AppLayout><TelegramConnectPage /></AppLayout></PrivateRoute>}
         />
 
         <Route

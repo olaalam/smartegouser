@@ -3,11 +3,13 @@ import { useSelector } from "react-redux";
 import MessengerChatPage from "./MessengerChatPage";
 import InstagramChatPage from "./InstagramChatPage";
 import WhatsAppChatPage from "./WhatsAppChatPage";
+import TelegramChatPage from "./TelegramChatPage";
 
 const CHANNELS = [
   { id: "messenger", label: { en: "Messenger", ar: "ماسنجر" }, logo: FacebookLogo, color: "#1877f2" },
   { id: "instagram", label: { en: "Instagram", ar: "إنستغرام" }, logo: InstagramLogo, color: "#e1306c" },
   { id: "whatsapp", label: { en: "WhatsApp", ar: "واتساب" }, logo: WhatsAppLogo, color: "#00a884" },
+  { id: "telegram", label: { en: "Telegram", ar: "تيليجرام" }, logo: TelegramLogo, color: "#229ED9" },
 ];
 
 function FacebookLogo() {
@@ -36,10 +38,19 @@ function WhatsAppLogo() {
   );
 }
 
+function TelegramLogo() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" className="h-5 w-5" fill="currentColor">
+      <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2Zm4.96 6.78-1.53 7.18c-.11.52-.42.65-.84.4l-2.3-1.7-1.1 1.05c-.12.12-.22.22-.46.22l.17-2.38 4.35-3.92c.19-.17-.04-.26-.29-.09l-5.38 3.39-2.31-.72c-.5-.16-.51-.5.11-.74l8.96-3.45c.42-.15.78.1.65.73Z" />
+    </svg>
+  );
+}
+
 const CHAT_PAGES = {
   messenger: MessengerChatPage,
   instagram: InstagramChatPage,
   whatsapp: WhatsAppChatPage,
+  telegram: TelegramChatPage,
 };
 
 export default function ChatsPage() {

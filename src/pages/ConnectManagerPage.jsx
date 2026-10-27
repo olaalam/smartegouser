@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { Link2 } from "lucide-react";
+import { Link2, Send } from "lucide-react";
 import { toast } from "sonner";
 import axiosInstance from "../api/axiosInstance";
 import { setAuth, saveAuthToStorage } from "../redux/slices/authSlice";
@@ -50,12 +50,14 @@ const COPY = {
     available: "Available connections",
     whatsappDescription: "Link a WhatsApp Business number and reply to customers.",
     messengerDescription: "Connect a Facebook page to manage Messenger conversations.",
+    telegramDescription: "Connect a Telegram bot and start receiving customer messages.",
     whatsappConnect: "Set up WhatsApp",
+    telegramConnect: "Connect with Telegram",
     facebookConnect: "Connect by FB",
     manage: "Manage",
     connecting: "Connecting...",
     allChannels: "Messaging channels",
-    channelCount: "2 channels",
+    channelCount: "3 channels",
     facebookType: "MESSAGING CHANNEL",
     whatsappType: "BUSINESS CHANNEL",
     connectHint: "Not connected",
@@ -69,12 +71,14 @@ const COPY = {
     available: "القنوات المتاحة",
     whatsappDescription: "اربطي رقم WhatsApp Business للرد على العملاء.",
     messengerDescription: "اربطي صفحة فيسبوك لإدارة محادثات Messenger.",
+    telegramDescription: "اربطي بوت Telegram لبدء استقبال رسائل العملاء.",
     whatsappConnect: "إعداد WhatsApp",
+    telegramConnect: "الربط مع Telegram",
     facebookConnect: "ربط باستخدام FB",
     manage: "إدارة",
     connecting: "جاري الربط...",
     allChannels: "قنوات المراسلة",
-    channelCount: "قناتان",
+    channelCount: "3 قنوات",
     facebookType: "قناة مراسلة",
     whatsappType: "قناة أعمال",
     connectHint: "غير متصلة",
@@ -124,6 +128,7 @@ export default function ConnectManagerPage() {
   const [loadingFb, setLoadingFb] = useState(false);
   const facebookConnected = isChannelConnected("facebook");
   const whatsappConnected = isChannelConnected("whatsapp");
+  const telegramConnected = isChannelConnected("telegram");
 
   // تهيئة Facebook SDK
   useEffect(() => {
@@ -226,10 +231,10 @@ export default function ConnectManagerPage() {
             <h2 id="available-connections-heading" className="text-sm font-semibold text-[var(--foreground)]">
               {t.available}
             </h2>
-            <span className="text-xs text-[var(--muted-foreground)]">02</span>
+            <span className="text-xs text-[var(--muted-foreground)]">03</span>
           </div>
 
-          <div className="grid items-stretch gap-4 lg:grid-cols-2">
+          <div className="grid items-stretch gap-4 lg:grid-cols-3">
 {/* Facebook Card */}
 <ConnectionCard
   title="Facebook"
@@ -253,6 +258,17 @@ export default function ConnectManagerPage() {
   connectLabel={t.whatsappConnect}
   connectHint={whatsappConnected ? t.connectedHint : t.connectHint}
   onConnect={() => navigate("/whatsapp")}
+/>
+
+<ConnectionCard
+  title="Telegram"
+  type={t.facebookType}
+  description={t.telegramDescription}
+  icon={Send}
+  accent="#229ED9"
+  connectLabel={t.telegramConnect}
+  connectHint={telegramConnected ? t.connectedHint : t.connectHint}
+  onConnect={() => navigate("/telegram-connect")}
 />
           </div>
         </section>

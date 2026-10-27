@@ -1,15 +1,20 @@
 import { useEffect, useRef, useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import { useSelector } from "react-redux";
-import { Camera, ChevronLeft, ChevronRight, ClipboardList, LayoutDashboard, Link2, MessageCircle, MessageSquare, Phone } from "lucide-react";
+import { Camera, ChevronLeft, ChevronRight, ClipboardList, LayoutDashboard, Link2, MessageCircle, MessageSquare, Phone, Send } from "lucide-react";
 import Navbar from "./Navbar";
 import { useGet } from "../../hooks/useGet";
 import { getEcho } from "../../api/echoService";
 import { getInstagramChatAccounts, getInstagramConversations } from "../../api/instagramApi";
 import { getMessengerConversations } from "../../api/messengerApi";
 import { getWhatsAppConversations } from "../../api/whatsappApi";
+import { getTelegramAccounts } from "../../api/telegramApi";
 import { API_ENDPOINTS } from "../../utils/constants";
-import { CHAT_ACTIVE_EVENT, CHAT_READ_EVENT } from "../../utils/chatUnreadEvents";
+import {
+  CHAT_ACTIVE_EVENT,
+  CHAT_READ_EVENT,
+  TELEGRAM_ACCOUNTS_UPDATED_EVENT,
+} from "../../utils/chatUnreadEvents";
 
 const subscribedItems = (items) => Array.isArray(items)
   ? items.filter((item) => item.subscription_status === true)
@@ -30,8 +35,29 @@ export default function AppLayout({ children }) {
   const { data: allChatsResponse, loading: chatsLoading, error: chatsError, refetch: refetchChats } = useGet(API_ENDPOINTS.USER.ALL_CHATS);
   const allChats = allChatsResponse?.data ?? allChatsResponse ?? {};
   const [unreadUpdates, setUnreadUpdates] = useState({ response: null, deltas: {} });
+  const [telegramAccounts, setTelegramAccounts] = useState([]);
   const activeChatRef = useRef(null);
   const refetchChatsRef = useRef(refetchChats);
+
+  useEffect(() => {
+    let cancelled = false;
+    const loadTelegramAccounts = () => {
+      getTelegramAccounts({ per_page: 100, paginate: 0 })
+        .then((response) => {
+          if (!cancelled) setTelegramAccounts(dataList(response));
+        })
+        .catch((error) => {
+          console.error("Could not load Telegram accounts for the sidebar", error);
+        });
+    };
+
+    loadTelegramAccounts();
+    window.addEventListener(TELEGRAM_ACCOUNTS_UPDATED_EVENT, loadTelegramAccounts);
+    return () => {
+      cancelled = true;
+      window.removeEventListener(TELEGRAM_ACCOUNTS_UPDATED_EVENT, loadTelegramAccounts);
+    };
+  }, []);
 
   useEffect(() => {
     refetchChatsRef.current = refetchChats;
@@ -205,6 +231,16 @@ export default function AppLayout({ children }) {
       itemLabel: (item) => item.phone || String(item.id),
       itemTo: (item) => `/chats?channel=whatsapp&whatsItemId=${encodeURIComponent(item.id)}`,
       itemKey: (item) => `whatsapp:${item.id}`,
+    },
+    {
+      id: "telegram",
+      to: "/chats?channel=telegram",
+      label: { en: "Telegram", ar: "تيليجرام" },
+      icon: Send,
+      items: telegramAccounts,
+      itemLabel: (item) => item.bot_username ? `@${item.bot_username}` : item.bot_name || String(item.id),
+      itemTo: (item) => `/chats?channel=telegram&telegramAccountId=${encodeURIComponent(item.id)}`,
+      itemKey: (item) => `telegram:${item.id}`,
     },
   ].filter(({ items }) => items.length > 0);
   const activeChatChannel = new URLSearchParams(location.search).get("channel") || "messenger";

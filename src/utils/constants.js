@@ -38,4 +38,12 @@ export const API_ENDPOINTS = {
     REGISTER: (id) => `whats/items/${encodeURIComponent(id)}/register`,
     RESUBSCRIBE_WEBHOOK: (id) => `whats/items/${encodeURIComponent(id)}/resubscribe-webhook`,
   },
+  TELEGRAM: {
+    CONNECT: "user/telegram/connect",
+    ACCOUNTS: "user/telegram/accounts",
+    CONVERSATIONS: "user/chat/telegram/conversations",
+    MESSAGES: "user/chat/telegram/messages",
+    SEND: "user/chat/telegram/send",
+    MARK_READ: "user/chat/mark-as-read",
+  },
 };
