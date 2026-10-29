@@ -20,6 +20,8 @@ import UserOrdersPage from "./pages/UserOrdersPage";
 import ChatsPage from "./pages/ChatsPage";
 import PaymentResultPage from "./pages/PaymentResultPage";
 import TelegramConnectPage from "./pages/TelegramConnectPage";
+import TikTokConnectPage from "./pages/TikTokConnectPage";
+import TikTokChatPage from "./pages/TikTokChatPage";
 
 // ─── Route guards ─────────────────────────────────────────────────────────────
 
@@ -70,6 +72,21 @@ export default function App() {
         <Route
           path="/telegram-connect"
           element={<PrivateRoute><AppLayout><TelegramConnectPage /></AppLayout></PrivateRoute>}
+        />
+
+        <Route
+          path="/tiktok-connect"
+          element={<PrivateRoute><AppLayout><TikTokConnectPage /></AppLayout></PrivateRoute>}
+        />
+
+        <Route
+          path="/auth/tiktok/callback"
+          element={<PrivateRoute><AppLayout><TikTokConnectPage /></AppLayout></PrivateRoute>}
+        />
+
+        <Route
+          path="/tiktok-chat"
+          element={<PrivateRoute><AppLayout><TikTokChatPage /></AppLayout></PrivateRoute>}
         />
 
         <Route

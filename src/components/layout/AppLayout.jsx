@@ -9,12 +9,22 @@ import { getInstagramChatAccounts, getInstagramConversations } from "../../api/i
 import { getMessengerConversations } from "../../api/messengerApi";
 import { getWhatsAppConversations } from "../../api/whatsappApi";
 import { getTelegramAccounts } from "../../api/telegramApi";
+import { getTikTokChatAccounts } from "../../api/tiktokApi";
 import { API_ENDPOINTS } from "../../utils/constants";
 import {
   CHAT_ACTIVE_EVENT,
   CHAT_READ_EVENT,
   TELEGRAM_ACCOUNTS_UPDATED_EVENT,
+  TIKTOK_ACCOUNTS_UPDATED_EVENT,
 } from "../../utils/chatUnreadEvents";
+
+function TikTokSidebarIcon(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" {...props}>
+      <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 3 15.68 6.34 6.34 0 0 0 9.34 22a6.34 6.34 0 0 0 6.34-6.32V8.47a8.28 8.28 0 0 0 4.84 1.55V6.69h-.93z" />
+    </svg>
+  );
+}
 
 const subscribedItems = (items) => Array.isArray(items)
   ? items.filter((item) => item.subscription_status === true)
@@ -36,6 +46,7 @@ export default function AppLayout({ children }) {
   const allChats = allChatsResponse?.data ?? allChatsResponse ?? {};
   const [unreadUpdates, setUnreadUpdates] = useState({ response: null, deltas: {} });
   const [telegramAccounts, setTelegramAccounts] = useState([]);
+  const [tiktokAccounts, setTikTokAccounts] = useState([]);
   const activeChatRef = useRef(null);
   const refetchChatsRef = useRef(refetchChats);
 
@@ -56,6 +67,26 @@ export default function AppLayout({ children }) {
     return () => {
       cancelled = true;
       window.removeEventListener(TELEGRAM_ACCOUNTS_UPDATED_EVENT, loadTelegramAccounts);
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    const loadTikTokAccounts = () => {
+      getTikTokChatAccounts({ per_page: 100, paginate: 0 })
+        .then((response) => {
+          if (!cancelled) setTikTokAccounts(dataList(response));
+        })
+        .catch((error) => {
+          console.error("Could not load TikTok accounts for the sidebar", error);
+        });
+    };
+
+    loadTikTokAccounts();
+    window.addEventListener(TIKTOK_ACCOUNTS_UPDATED_EVENT, loadTikTokAccounts);
+    return () => {
+      cancelled = true;
+      window.removeEventListener(TIKTOK_ACCOUNTS_UPDATED_EVENT, loadTikTokAccounts);
     };
   }, []);
 
@@ -241,6 +272,16 @@ export default function AppLayout({ children }) {
       itemLabel: (item) => item.bot_username ? `@${item.bot_username}` : item.bot_name || String(item.id),
       itemTo: (item) => `/chats?channel=telegram&telegramAccountId=${encodeURIComponent(item.id)}`,
       itemKey: (item) => `telegram:${item.id}`,
+    },
+    {
+      id: "tiktok",
+      to: "/chats?channel=tiktok",
+      label: { en: "TikTok", ar: "تيك توك" },
+      icon: TikTokSidebarIcon,
+      items: tiktokAccounts,
+      itemLabel: (item) => item.username ? `@${item.username}` : item.display_name || String(item.id),
+      itemTo: (item) => `/chats?channel=tiktok&tiktokAccountId=${encodeURIComponent(item.id)}`,
+      itemKey: (item) => `tiktok:${item.id}`,
     },
   ].filter(({ items }) => items.length > 0);
   const activeChatChannel = new URLSearchParams(location.search).get("channel") || "messenger";

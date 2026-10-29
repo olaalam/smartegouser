@@ -2,6 +2,7 @@ const CONNECTION_KEYS = {
   facebook: "facebook_connected",
   whatsapp: "whatsapp_connected",
   telegram: "telegram_connected",
+  tiktok: "tiktok_connected",
 };
 
 export function isChannelConnected(channel) {

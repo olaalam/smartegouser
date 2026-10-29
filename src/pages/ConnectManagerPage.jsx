@@ -43,6 +43,13 @@ const WhatsappIcon = (props) => (
   </svg>
 );
 
+// شعار تيك توك الرسمي (SVG)
+const TikTokIcon = (props) => (
+  <svg viewBox="0 0 24 24" fill="currentColor" {...props}>
+    <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 3 15.68 6.34 6.34 0 0 0 9.34 22a6.34 6.34 0 0 0 6.34-6.32V8.47a8.28 8.28 0 0 0 4.84 1.55V6.69h-.93z" />
+  </svg>
+);
+
 const COPY = {
   en: {
     title: "Connect accounts",
@@ -51,15 +58,18 @@ const COPY = {
     whatsappDescription: "Link a WhatsApp Business number and reply to customers.",
     messengerDescription: "Connect a Facebook page to manage Messenger conversations.",
     telegramDescription: "Connect a Telegram bot and start receiving customer messages.",
+    tiktokDescription: "Connect your TikTok account to automate comments & DMs with AI.",
     whatsappConnect: "Set up WhatsApp",
     telegramConnect: "Connect with Telegram",
+    tiktokConnect: "Connect TikTok",
     facebookConnect: "Connect by FB",
     manage: "Manage",
     connecting: "Connecting...",
     allChannels: "Messaging channels",
-    channelCount: "3 channels",
+    channelCount: "4 channels",
     facebookType: "MESSAGING CHANNEL",
     whatsappType: "BUSINESS CHANNEL",
+    tiktokType: "MESSAGING & AI",
     connectHint: "Not connected",
     connectedHint: "Connected",
     facebookConnectSuccess: "Facebook connected successfully!",
@@ -72,15 +82,18 @@ const COPY = {
     whatsappDescription: "اربطي رقم WhatsApp Business للرد على العملاء.",
     messengerDescription: "اربطي صفحة فيسبوك لإدارة محادثات Messenger.",
     telegramDescription: "اربطي بوت Telegram لبدء استقبال رسائل العملاء.",
+    tiktokDescription: "اربطي حساب TikTok لإدارة الردود التلقائية بالذكاء الاصطناعي وصندوق الوارد.",
     whatsappConnect: "إعداد WhatsApp",
     telegramConnect: "الربط مع Telegram",
+    tiktokConnect: "الربط مع TikTok",
     facebookConnect: "ربط باستخدام FB",
     manage: "إدارة",
     connecting: "جاري الربط...",
     allChannels: "قنوات المراسلة",
-    channelCount: "3 قنوات",
+    channelCount: "4 قنوات",
     facebookType: "قناة مراسلة",
     whatsappType: "قناة أعمال",
+    tiktokType: "مراسلة وذكاء اصطناعي",
     connectHint: "غير متصلة",
     connectedHint: "متصلة",
     facebookConnectSuccess: "تم ربط Facebook بنجاح!",
@@ -92,13 +105,13 @@ function ConnectionCard({ icon: Icon, title, type, description, accent, onConnec
   return (
     <article className="group flex h-full min-w-0 flex-col rounded-xl border border-[var(--border)] bg-[var(--card)] p-5 transition-colors hover:border-[var(--primary)]/40">
       <div className="flex items-start gap-4">
-          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border border-[var(--border)] bg-[var(--background)]">
-            <Icon className="h-5 w-5" style={{ color: accent }} aria-hidden="true" />
-          </span>
-          <div className="min-w-0 flex-1 pt-0.5">
-            <p className="text-[10px] font-semibold text-[var(--muted-foreground)]">{type}</p>
-            <h2 className="mt-1 text-base font-semibold text-[var(--foreground)]">{title}</h2>
-          </div>
+        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border border-[var(--border)] bg-[var(--background)]">
+          <Icon className="h-5 w-5" style={{ color: accent }} aria-hidden="true" />
+        </span>
+        <div className="min-w-0 flex-1 pt-0.5">
+          <p className="text-[10px] font-semibold text-[var(--muted-foreground)]">{type}</p>
+          <h2 className="mt-1 text-base font-semibold text-[var(--foreground)]">{title}</h2>
+        </div>
       </div>
       <p className="mt-4 min-h-10 text-sm leading-5 text-[var(--muted-foreground)]">{description}</p>
 
@@ -129,6 +142,7 @@ export default function ConnectManagerPage() {
   const facebookConnected = isChannelConnected("facebook");
   const whatsappConnected = isChannelConnected("whatsapp");
   const telegramConnected = isChannelConnected("telegram");
+  const tiktokConnected = isChannelConnected("tiktok");
 
   // تهيئة Facebook SDK
   useEffect(() => {
@@ -231,49 +245,61 @@ export default function ConnectManagerPage() {
             <h2 id="available-connections-heading" className="text-sm font-semibold text-[var(--foreground)]">
               {t.available}
             </h2>
-            <span className="text-xs text-[var(--muted-foreground)]">03</span>
+            <span className="text-xs text-[var(--muted-foreground)]">04</span>
           </div>
 
-          <div className="grid items-stretch gap-4 lg:grid-cols-3">
-{/* Facebook Card */}
-<ConnectionCard
-  title="Facebook"
-  type={t.facebookType}
-  description={t.messengerDescription}
-  icon={FacebookIcon}
-  accent="#0866ff"
-  connectLabel={loadingFb ? t.connecting : t.facebookConnect}
-  connectHint={facebookConnected ? t.connectedHint : t.connectHint}
-  onConnect={handleFacebookConnect}
-  loading={loadingFb}
-/>
+          <div className="grid items-stretch gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {/* Facebook Card */}
+            <ConnectionCard
+              title="Facebook"
+              type={t.facebookType}
+              description={t.messengerDescription}
+              icon={FacebookIcon}
+              accent="#0866ff"
+              connectLabel={loadingFb ? t.connecting : t.facebookConnect}
+              connectHint={facebookConnected ? t.connectedHint : t.connectHint}
+              onConnect={handleFacebookConnect}
+              loading={loadingFb}
+            />
 
-{/* WhatsApp Card */}
-<ConnectionCard
-  title="WhatsApp"
-  type={t.whatsappType}
-  description={t.whatsappDescription}
-  icon={WhatsappIcon}
-  accent="#25D366"
-  connectLabel={t.whatsappConnect}
-  connectHint={whatsappConnected ? t.connectedHint : t.connectHint}
-  onConnect={() => navigate("/whatsapp")}
-/>
+            {/* WhatsApp Card */}
+            <ConnectionCard
+              title="WhatsApp"
+              type={t.whatsappType}
+              description={t.whatsappDescription}
+              icon={WhatsappIcon}
+              accent="#25D366"
+              connectLabel={t.whatsappConnect}
+              connectHint={whatsappConnected ? t.connectedHint : t.connectHint}
+              onConnect={() => navigate("/whatsapp")}
+            />
 
-<ConnectionCard
-  title="Telegram"
-  type={t.facebookType}
-  description={t.telegramDescription}
-  icon={Send}
-  accent="#229ED9"
-  connectLabel={t.telegramConnect}
-  connectHint={telegramConnected ? t.connectedHint : t.connectHint}
-  onConnect={() => navigate("/telegram-connect")}
-/>
+            {/* Telegram Card */}
+            <ConnectionCard
+              title="Telegram"
+              type={t.facebookType}
+              description={t.telegramDescription}
+              icon={Send}
+              accent="#229ED9"
+              connectLabel={t.telegramConnect}
+              connectHint={telegramConnected ? t.connectedHint : t.connectHint}
+              onConnect={() => navigate("/telegram-connect")}
+            />
+
+            {/* TikTok Card */}
+            <ConnectionCard
+              title="TikTok"
+              type={t.tiktokType}
+              description={t.tiktokDescription}
+              icon={TikTokIcon}
+              accent="#FE2C55"
+              connectLabel={t.tiktokConnect}
+              connectHint={tiktokConnected ? t.connectedHint : t.connectHint}
+              onConnect={() => navigate("/tiktok-connect")}
+            />
           </div>
         </section>
       </div>
     </main>
   );
 }
-////////////////////////////////////////////////////////////////////////////////////

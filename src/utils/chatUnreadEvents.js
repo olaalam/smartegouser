@@ -1,6 +1,7 @@
 export const CHAT_ACTIVE_EVENT = "smartego:chat-active";
 export const CHAT_READ_EVENT = "smartego:chat-read";
 export const TELEGRAM_ACCOUNTS_UPDATED_EVENT = "smartego:telegram-accounts-updated";
+export const TIKTOK_ACCOUNTS_UPDATED_EVENT = "smartego:tiktok-accounts-updated";
 
 export function publishActiveChat(detail) {
   window.dispatchEvent(new CustomEvent(CHAT_ACTIVE_EVENT, { detail }));
@@ -12,4 +13,8 @@ export function publishChatRead() {
 
 export function publishTelegramAccountsUpdated() {
   window.dispatchEvent(new Event(TELEGRAM_ACCOUNTS_UPDATED_EVENT));
+}
+
+export function publishTikTokAccountsUpdated() {
+  window.dispatchEvent(new Event(TIKTOK_ACCOUNTS_UPDATED_EVENT));
 }

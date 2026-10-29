@@ -46,4 +46,16 @@ export const API_ENDPOINTS = {
     SEND: "user/chat/telegram/send",
     MARK_READ: "user/chat/mark-as-read",
   },
+  TIKTOK: {
+    AUTH_URL: "user/tiktok/auth-url",
+    CONNECT: "user/tiktok/connect",
+    ACCOUNTS: "user/tiktok/accounts",
+    ACCOUNT_DETAIL: (id) => `user/tiktok/accounts/${encodeURIComponent(id)}`,
+    REFRESH_TOKEN: (id) => `user/tiktok/accounts/${encodeURIComponent(id)}/refresh-token`,
+    DISCONNECT: (id) => `user/tiktok/accounts/${encodeURIComponent(id)}`,
+    CHAT_ACCOUNTS: "user/chat/tiktok/accounts",
+    CHAT_CONVERSATIONS: "user/chat/tiktok/conversations",
+    CHAT_MESSAGES: "user/chat/tiktok/messages",
+    CHAT_SEND: "user/chat/tiktok/send",
+  },
 };
