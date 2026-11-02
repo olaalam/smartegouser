@@ -60,6 +60,7 @@ const COPY = {
     aiPromptDesc: "Instructions for AI when replying to comments and direct messages.",
     aiFile: "Knowledge / Menu File (.txt or .md, max 2MB)",
     websiteUrl: "Website URL",
+    apiLink: "API link",
     androidLink: "Android App URL",
     iosLink: "iOS App URL",
     statusToggle: "Auto-Reply Status",
@@ -121,6 +122,7 @@ const COPY = {
     aiPromptDesc: "توجيهات الـ AI للرد على استفسارات العملاء وأسلوب الحوار.",
     aiFile: "ملف المنيو / البيانات (.txt أو .md بحد أقصى 2MB)",
     websiteUrl: "رابط موقع المتجر للطلب أونلاين",
+    apiLink: "رابط API",
     androidLink: "رابط تطبيق Android",
     iosLink: "رابط تطبيق iOS",
     statusToggle: "حالة الرد التلقائي",
@@ -185,6 +187,7 @@ export default function TikTokConnectPage() {
     refreshToken: "",
     aiContext: "",
     websiteUrl: "",
+    apiLink: "",
     androidLink: "",
     iosLink: "",
     aiFile: null,
@@ -197,6 +200,7 @@ export default function TikTokConnectPage() {
     status: "active",
     aiContext: "",
     websiteUrl: "",
+    apiLink: "",
     androidLink: "",
     iosLink: "",
     aiFile: null,
@@ -291,6 +295,7 @@ export default function TikTokConnectPage() {
       if (manualForm.refreshToken) formData.append("refresh_token", manualForm.refreshToken.trim());
       if (manualForm.aiContext) formData.append("ai_context", manualForm.aiContext.trim());
       if (manualForm.websiteUrl) formData.append("website_url", manualForm.websiteUrl.trim());
+      if (manualForm.apiLink) formData.append("api_link", manualForm.apiLink.trim());
       if (manualForm.androidLink) formData.append("android_link", manualForm.androidLink.trim());
       if (manualForm.iosLink) formData.append("ios_link", manualForm.iosLink.trim());
       if (manualForm.aiFile) formData.append("ai_file", manualForm.aiFile);
@@ -307,6 +312,7 @@ export default function TikTokConnectPage() {
         refreshToken: "",
         aiContext: "",
         websiteUrl: "",
+        apiLink: "",
         androidLink: "",
         iosLink: "",
         aiFile: null,
@@ -327,6 +333,7 @@ export default function TikTokConnectPage() {
       status: account.status || "active",
       aiContext: account.ai_context || "",
       websiteUrl: account.website_url || "",
+      apiLink: account.api_link || "",
       androidLink: account.android_link || "",
       iosLink: account.ios_link || "",
       aiFile: null,
@@ -344,6 +351,7 @@ export default function TikTokConnectPage() {
       formData.append("status", editForm.status);
       if (editForm.aiContext !== undefined) formData.append("ai_context", editForm.aiContext.trim());
       if (editForm.websiteUrl !== undefined) formData.append("website_url", editForm.websiteUrl.trim());
+      if (editForm.apiLink !== undefined) formData.append("api_link", editForm.apiLink.trim());
       if (editForm.androidLink !== undefined) formData.append("android_link", editForm.androidLink.trim());
       if (editForm.iosLink !== undefined) formData.append("ios_link", editForm.iosLink.trim());
       if (editForm.aiFile) formData.append("ai_file", editForm.aiFile);
@@ -535,6 +543,16 @@ export default function TikTokConnectPage() {
                     type="url"
                     value={manualForm.websiteUrl}
                     onChange={(e) => setManualForm({ ...manualForm, websiteUrl: e.target.value })}
+                    placeholder="https://..."
+                    className="w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm outline-none focus:border-[#FE2C55]"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-semibold">{t.apiLink}</label>
+                  <input
+                    type="url"
+                    value={manualForm.apiLink}
+                    onChange={(e) => setManualForm({ ...manualForm, apiLink: e.target.value })}
                     placeholder="https://..."
                     className="w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm outline-none focus:border-[#FE2C55]"
                   />
@@ -865,6 +883,17 @@ export default function TikTokConnectPage() {
                     type="url"
                     value={editForm.websiteUrl}
                     onChange={(e) => setEditForm({ ...editForm, websiteUrl: e.target.value })}
+                    placeholder="https://..."
+                    className="w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm outline-none focus:border-[#FE2C55]"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-1 block text-xs font-semibold">{t.apiLink}</label>
+                  <input
+                    type="url"
+                    value={editForm.apiLink}
+                    onChange={(e) => setEditForm({ ...editForm, apiLink: e.target.value })}
                     placeholder="https://..."
                     className="w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm outline-none focus:border-[#FE2C55]"
                   />

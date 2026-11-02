@@ -9,6 +9,12 @@ export const connectTelegramBot = (formData) =>
 export const getTelegramAccounts = (params = {}) =>
   axiosInstance.get(API_ENDPOINTS.TELEGRAM.ACCOUNTS, { params });
 
+export const getTelegramAccount = (id) =>
+  axiosInstance.get(`${API_ENDPOINTS.TELEGRAM.ACCOUNTS}/${encodeURIComponent(id)}`);
+
+export const updateTelegramAccount = (id, body) =>
+  axiosInstance.put(`${API_ENDPOINTS.TELEGRAM.ACCOUNTS}/${encodeURIComponent(id)}`, body);
+
 export const getTelegramConversations = (params = {}) =>
   axiosInstance.get(API_ENDPOINTS.TELEGRAM.CONVERSATIONS, { params });
 

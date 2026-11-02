@@ -11,7 +11,7 @@ import Loader from "../common/Loader";
 import SectionCard from "../ui/SectionCard";
 
 const EMPTY_FORM = {
-  phone: "", verified_name: "", android_link: "", ios_link: "", website_url: "",
+  phone: "", verified_name: "", android_link: "", ios_link: "", website_url: "", api_link: "",
   auto_request_code: false, ai_context: "", ai_file: null, ai_file_value: "",
 };
 const inputClass = "w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm text-[var(--foreground)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]";
@@ -79,6 +79,7 @@ export default function WhatsAppNumbersStep({ items, loading, error, refetch, la
       android_link: form.android_link || null,
       ios_link: form.ios_link || null,
       website_url: form.website_url || null,
+      api_link: form.api_link || null,
       ai_context: form.ai_context || null,
       ai_file: form.ai_file_value || null,
     } : makePayload(form, lang);
@@ -111,6 +112,7 @@ export default function WhatsAppNumbersStep({ items, loading, error, refetch, la
       android_link: item.android_link ?? "",
       ios_link: item.ios_link ?? "",
       website_url: item.website_url ?? "",
+      api_link: item.api_link ?? "",
       ai_context: item.ai_context ?? "",
       ai_file_value: item.ai_file ?? "",
       ai_file: null,
@@ -258,6 +260,11 @@ export default function WhatsAppNumbersStep({ items, loading, error, refetch, la
                       <span>{t.websiteUrl}</span>
                       <input className={inputClass} type="url" value={form.website_url}
                         onChange={(event) => setForm((current) => ({ ...current, website_url: event.target.value }))} />
+                    </label>
+                    <label className="space-y-1.5 text-sm font-medium text-[var(--foreground)] sm:col-span-2">
+                      <span>{t.apiLink}</span>
+                      <input className={inputClass} type="url" value={form.api_link}
+                        onChange={(event) => setForm((current) => ({ ...current, api_link: event.target.value }))} />
                     </label>
                   </div>
                 </div>

@@ -14,7 +14,7 @@ const copy = {
     title: "AI assistant", subtitle: "Manage the AI context and knowledge file for this channel.",
     messenger: "Facebook Messenger", context: "AI context",
     instagram: "Instagram", instagramAccount: "Instagram account", noLinkedInstagramItem: "No Instagram item is linked to this account.",
-    website: "Website URL", android: "Android app link", ios: "iOS app link", fileTooLarge: "The file must be 2 MB or smaller.",
+    website: "Website URL", android: "Android app link", ios: "iOS app link", apiLink: "API link", fileTooLarge: "The file must be 2 MB or smaller.",
     contextHint: "Instructions and information the assistant should use when replying.",
     file: "AI file", chooseFile: "Choose file", removeFile: "Remove file", fileHint: "Upload a knowledge file for the assistant.",
     save: "Save AI settings", saving: "Saving…", loading: "Loading AI settings…",
@@ -26,7 +26,7 @@ const copy = {
     title: "مساعد الذكاء الاصطناعي", subtitle: "إدارة سياق الذكاء الاصطناعي وملف المعرفة لهذه القناة.",
     messenger: "ماسنجر فيسبوك", context: "سياق الذكاء الاصطناعي",
     instagram: "Instagram", instagramAccount: "حساب Instagram", noLinkedInstagramItem: "لا يوجد عنصر Instagram مرتبط بهذا الحساب.",
-    website: "رابط الموقع", android: "رابط تطبيق Android", ios: "رابط تطبيق iOS", fileTooLarge: "يجب ألا يتجاوز حجم الملف 2 ميجابايت.",
+    website: "رابط الموقع", android: "رابط تطبيق Android", ios: "رابط تطبيق iOS", apiLink: "رابط API", fileTooLarge: "يجب ألا يتجاوز حجم الملف 2 ميجابايت.",
     contextHint: "التعليمات والمعلومات التي يستخدمها المساعد عند الرد.",
     file: "ملف الذكاء الاصطناعي", chooseFile: "اختيار ملف", removeFile: "حذف الملف", fileHint: "ارفعي ملف معرفة ليستخدمه المساعد.",
     save: "حفظ إعدادات AI", saving: "جاري الحفظ…", loading: "جاري تحميل إعدادات AI…",
@@ -42,7 +42,7 @@ const normalizeData = (response) => {
 };
 
 function useAIData(loader, resourceId, errorFallback) {
-  const emptyData = { ai_context: "", ai_file: "", android_link: "", ios_link: "", website_url: "" };
+  const emptyData = { ai_context: "", ai_file: "", android_link: "", ios_link: "", website_url: "", api_link: "" };
   const [data, setData] = useState(emptyData);
   const [initialData, setInitialData] = useState(emptyData);
   const [loading, setLoading] = useState(true);
@@ -62,6 +62,7 @@ function useAIData(loader, resourceId, errorFallback) {
           android_link: result.android_link ?? "",
           ios_link: result.ios_link ?? "",
           website_url: result.website_url ?? "",
+          api_link: result.api_link ?? "",
         };
         setData(nextData);
         setInitialData(nextData);
@@ -99,7 +100,7 @@ function AIFields({ data, setData, saving, hasChanges, selectedFile, fileInputRe
         />
         <span className="text-xs text-[var(--muted-foreground)]">{t.contextHint}</span>
       </label>
-      {[["website_url", t.website], ["android_link", t.android], ["ios_link", t.ios]].map(([name, label]) => (
+      {[["website_url", t.website], ["android_link", t.android], ["ios_link", t.ios], ["api_link", t.apiLink]].map(([name, label]) => (
         <label key={name} className="block space-y-1.5">
           <span className="text-sm font-medium text-[var(--foreground)]">{label}</span>
           <input type="url" value={data[name] ?? ""}
@@ -175,6 +176,7 @@ function MessengerAI({ pageId, t }) {
     payload.append("android_link", data.android_link || "");
     payload.append("ios_link", data.ios_link || "");
     payload.append("website_url", data.website_url || "");
+    payload.append("api_link", data.api_link || "");
     const result = await execute(API_ENDPOINTS.MESSENGER.AI_DATA, payload, {
       headers: { "Content-Type": "multipart/form-data" },
     });
@@ -193,6 +195,7 @@ function MessengerAI({ pageId, t }) {
     || data.android_link !== initialData.android_link
     || data.ios_link !== initialData.ios_link
     || data.website_url !== initialData.website_url
+    || data.api_link !== initialData.api_link
     || Boolean(selectedFile);
   const onClearFile = () => {
     if (selectedFile) setSelectedFile(null);
@@ -220,6 +223,7 @@ export function InstagramAISettings({ instagramId, lang }) {
     android_link: formOverrides.android_link ?? item?.android_link ?? "",
     ios_link: formOverrides.ios_link ?? item?.ios_link ?? "",
     website_url: formOverrides.website_url ?? item?.website_url ?? "",
+    api_link: formOverrides.api_link ?? item?.api_link ?? "",
   };
   const updateField = (name, value) => setFormOverrides((current) => ({ ...current, [name]: value }));
 
@@ -238,6 +242,7 @@ export function InstagramAISettings({ instagramId, lang }) {
     payload.append("android_link", formValues.android_link);
     payload.append("ios_link", formValues.ios_link);
     payload.append("website_url", formValues.website_url);
+    payload.append("api_link", formValues.api_link);
     if (aiFile) payload.append("ai_file", aiFile);
 
     setSaving(true);
@@ -278,7 +283,7 @@ export function InstagramAISettings({ instagramId, lang }) {
                   <textarea value={formValues.ai_context} onChange={(event) => updateField("ai_context", event.target.value)}
                     className="min-h-32 w-full resize-y rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm text-[var(--foreground)] outline-none focus:border-[var(--primary)] focus:ring-2 focus:ring-[var(--ring)]" />
                 </label>
-                {[["website_url", t.website], ["android_link", t.android], ["ios_link", t.ios]].map(([name, label]) => (
+                {[["website_url", t.website], ["android_link", t.android], ["ios_link", t.ios], ["api_link", t.apiLink]].map(([name, label]) => (
                   <label key={name} className="block space-y-1.5">
                     <span className="text-sm font-medium text-[var(--foreground)]">{label}</span>
                     <input type="url" value={formValues[name]} onChange={(event) => updateField(name, event.target.value)}

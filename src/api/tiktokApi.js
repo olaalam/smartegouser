@@ -26,7 +26,7 @@ export const getTikTokAccount = (id) =>
 // 5. تحديث بيانات الـ AI والروابط والحالة
 export const updateTikTokAccount = (id, data) => {
   const isFormData = data instanceof FormData;
-  return axiosInstance.post(
+  return axiosInstance.put(
     API_ENDPOINTS.TIKTOK.ACCOUNT_DETAIL(id),
     data,
     isFormData ? { headers: { "Content-Type": "multipart/form-data" } } : undefined

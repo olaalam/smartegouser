@@ -23,6 +23,7 @@ const COPY = {
     aiContextPlaceholder: "Describe how your assistant should respond to customers",
     aiFile: "Knowledge file (.txt or .md, max 2 MB)",
     website: "Website URL",
+    apiLink: "API link",
     android: "Android app URL",
     ios: "iOS app URL",
     connect: "Connect bot",
@@ -49,6 +50,7 @@ const COPY = {
     aiContextPlaceholder: "اكتبي طريقة الرد المطلوبة على العملاء",
     aiFile: "ملف المعلومات (.txt أو .md، بحد أقصى ٢ ميجابايت)",
     website: "رابط الموقع",
+    apiLink: "رابط API",
     android: "رابط تطبيق Android",
     ios: "رابط تطبيق iOS",
     connect: "ربط البوت",
@@ -80,6 +82,7 @@ export default function TelegramConnectPage() {
     botToken: "",
     aiContext: "",
     websiteUrl: "",
+    apiLink: "",
     androidLink: "",
     iosLink: "",
     aiFile: null,
@@ -132,6 +135,7 @@ export default function TelegramConnectPage() {
     if (form.aiContext.trim()) payload.append("ai_context", form.aiContext.trim());
     if (form.aiFile) payload.append("ai_file", form.aiFile);
     if (form.websiteUrl.trim()) payload.append("website_url", form.websiteUrl.trim());
+    if (form.apiLink.trim()) payload.append("api_link", form.apiLink.trim());
     if (form.androidLink.trim()) payload.append("android_link", form.androidLink.trim());
     if (form.iosLink.trim()) payload.append("ios_link", form.iosLink.trim());
 
@@ -235,6 +239,10 @@ export default function TelegramConnectPage() {
               <label className="block text-sm font-medium sm:col-span-2">
                 {t.website}
                 <input name="websiteUrl" type="url" value={form.websiteUrl} onChange={updateField} className={fieldClassName} />
+              </label>
+              <label className="block text-sm font-medium sm:col-span-2">
+                {t.apiLink}
+                <input name="apiLink" type="url" value={form.apiLink} onChange={updateField} className={fieldClassName} />
               </label>
               <label className="block text-sm font-medium">
                 {t.android}
