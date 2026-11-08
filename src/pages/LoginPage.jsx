@@ -166,7 +166,7 @@ export default function LoginPage() {
 
   const resetErrors = () => setError(null);
 
-  const handleLoginSubmit = async (e) => {
+const handleLoginSubmit = async (e) => {
     e.preventDefault();
     resetErrors();
 
@@ -180,6 +180,8 @@ export default function LoginPage() {
       const msg = result.error || (lang === "ar" ? "فشل تسجيل الدخول." : "Login failed.");
       setError(msg);
       toast.error(msg);
+      
+      navigate("/user/login", { replace: true });
     }
   };
 
