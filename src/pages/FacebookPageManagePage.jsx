@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router-dom";
-import { PanelsTopLeft, MessageCircle, MessageSquare, ArrowUpRight, CreditCard, Info } from "lucide-react";
+import { PanelsTopLeft, MessageCircle, MessageSquare, ArrowUpRight, Info } from "lucide-react";
 import { useGet } from "../hooks/useGet";
 import { API_ENDPOINTS } from "../utils/constants";
 import { useMinimumLoading } from "../hooks/useMinimumLoading";
@@ -10,6 +10,8 @@ import EmptyState from "../components/ui/EmptyState";
 import AISettingsPanel from "../components/messenger/AISettingsPanel";
 import { formatAvailableMessages } from "../utils/chatAccess";
 import { localizeApiLabel } from "../utils/localization";
+import { hasChatAccess } from "../utils/chatAccess";
+import SubscriptionButton from "../components/common/SubscriptionButton";
 
 const copy = {
   en: {
@@ -98,6 +100,15 @@ export default function FacebookPageManagePage() {
 
                   {activeTab === "info" ? (
                     <section id="facebook-info-panel" role="tabpanel" aria-labelledby="facebook-info-tab" className="space-y-6">
+                      <div className="flex justify-end">
+                        <SubscriptionButton
+                          channel="messenger"
+                          resourceId={page.page_id}
+                          active={hasChatAccess(page)}
+                          lang={lang}
+                          onUpdated={refetch}
+                        />
+                      </div>
                       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_240px]">
                         <div>
                           <h2 className="mb-3 text-base font-semibold text-[var(--foreground)]">{t.details}</h2>

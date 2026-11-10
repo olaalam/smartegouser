@@ -14,7 +14,9 @@ const copy = {
     title: "AI assistant", subtitle: "Manage the AI context and knowledge file for this channel.",
     messenger: "Facebook Messenger", context: "AI context",
     instagram: "Instagram", instagramAccount: "Instagram account", noLinkedInstagramItem: "No Instagram item is linked to this account.",
-    website: "Website URL", android: "Android app link", ios: "iOS app link", apiLink: "API link", fileTooLarge: "The file must be 2 MB or smaller.",
+    website: "Website URL", android: "Android app link", ios: "iOS app link", apiLink: "API link",
+    loginLink: "Login link", userName: "Username", password: "Password", productsLink: "Products link",
+    fileTooLarge: "The file must be 2 MB or smaller.",
     contextHint: "Instructions and information the assistant should use when replying.",
     file: "AI file", chooseFile: "Choose file", removeFile: "Remove file", fileHint: "Upload a knowledge file for the assistant.",
     save: "Save AI settings", saving: "Saving…", loading: "Loading AI settings…",
@@ -26,7 +28,9 @@ const copy = {
     title: "مساعد الذكاء الاصطناعي", subtitle: "إدارة سياق الذكاء الاصطناعي وملف المعرفة لهذه القناة.",
     messenger: "ماسنجر فيسبوك", context: "سياق الذكاء الاصطناعي",
     instagram: "Instagram", instagramAccount: "حساب Instagram", noLinkedInstagramItem: "لا يوجد عنصر Instagram مرتبط بهذا الحساب.",
-    website: "رابط الموقع", android: "رابط تطبيق Android", ios: "رابط تطبيق iOS", apiLink: "رابط API", fileTooLarge: "يجب ألا يتجاوز حجم الملف 2 ميجابايت.",
+    website: "رابط الموقع", android: "رابط تطبيق Android", ios: "رابط تطبيق iOS", apiLink: "رابط API",
+    loginLink: "رابط تسجيل الدخول", userName: "اسم المستخدم", password: "كلمة المرور", productsLink: "رابط المنتجات",
+    fileTooLarge: "يجب ألا يتجاوز حجم الملف 2 ميجابايت.",
     contextHint: "التعليمات والمعلومات التي يستخدمها المساعد عند الرد.",
     file: "ملف الذكاء الاصطناعي", chooseFile: "اختيار ملف", removeFile: "حذف الملف", fileHint: "ارفعي ملف معرفة ليستخدمه المساعد.",
     save: "حفظ إعدادات AI", saving: "جاري الحفظ…", loading: "جاري تحميل إعدادات AI…",
@@ -42,7 +46,10 @@ const normalizeData = (response) => {
 };
 
 function useAIData(loader, resourceId, errorFallback) {
-  const emptyData = { ai_context: "", ai_file: "", android_link: "", ios_link: "", website_url: "", api_link: "" };
+  const emptyData = {
+    ai_context: "", ai_file: "", android_link: "", ios_link: "", website_url: "", api_link: "",
+    login_link: "", user_name: "", password: "", products_link: "",
+  };
   const [data, setData] = useState(emptyData);
   const [initialData, setInitialData] = useState(emptyData);
   const [loading, setLoading] = useState(true);
@@ -63,6 +70,10 @@ function useAIData(loader, resourceId, errorFallback) {
           ios_link: result.ios_link ?? "",
           website_url: result.website_url ?? "",
           api_link: result.api_link ?? "",
+          login_link: result.login_link ?? "",
+          user_name: result.user_name ?? "",
+          password: "",
+          products_link: result.products_link ?? "",
         };
         setData(nextData);
         setInitialData(nextData);
@@ -104,6 +115,14 @@ function AIFields({ data, setData, saving, hasChanges, selectedFile, fileInputRe
         <label key={name} className="block space-y-1.5">
           <span className="text-sm font-medium text-[var(--foreground)]">{label}</span>
           <input type="url" value={data[name] ?? ""}
+            onChange={(event) => setData((current) => ({ ...current, [name]: event.target.value }))}
+            className="h-10 w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 text-sm text-[var(--foreground)] outline-none focus:border-[var(--primary)] focus:ring-2 focus:ring-[var(--ring)]" />
+        </label>
+      ))}
+      {[["login_link", t.loginLink, "url"], ["products_link", t.productsLink, "url"], ["user_name", t.userName, "text"], ["password", t.password, "password"]].map(([name, label, type]) => (
+        <label key={name} className="block space-y-1.5">
+          <span className="text-sm font-medium text-[var(--foreground)]">{label}</span>
+          <input type={type} autoComplete={name === "password" ? "new-password" : undefined} value={data[name] ?? ""}
             onChange={(event) => setData((current) => ({ ...current, [name]: event.target.value }))}
             className="h-10 w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 text-sm text-[var(--foreground)] outline-none focus:border-[var(--primary)] focus:ring-2 focus:ring-[var(--ring)]" />
         </label>
@@ -177,6 +196,10 @@ function MessengerAI({ pageId, t }) {
     payload.append("ios_link", data.ios_link || "");
     payload.append("website_url", data.website_url || "");
     payload.append("api_link", data.api_link || "");
+    payload.append("login_link", data.login_link || "");
+    payload.append("user_name", data.user_name || "");
+    if (data.password) payload.append("password", data.password);
+    payload.append("products_link", data.products_link || "");
     const result = await execute(API_ENDPOINTS.MESSENGER.AI_DATA, payload, {
       headers: { "Content-Type": "multipart/form-data" },
     });
@@ -196,6 +219,10 @@ function MessengerAI({ pageId, t }) {
     || data.ios_link !== initialData.ios_link
     || data.website_url !== initialData.website_url
     || data.api_link !== initialData.api_link
+    || data.login_link !== initialData.login_link
+    || data.user_name !== initialData.user_name
+    || Boolean(data.password)
+    || data.products_link !== initialData.products_link
     || Boolean(selectedFile);
   const onClearFile = () => {
     if (selectedFile) setSelectedFile(null);
@@ -224,6 +251,10 @@ export function InstagramAISettings({ instagramId, lang }) {
     ios_link: formOverrides.ios_link ?? item?.ios_link ?? "",
     website_url: formOverrides.website_url ?? item?.website_url ?? "",
     api_link: formOverrides.api_link ?? item?.api_link ?? "",
+    login_link: formOverrides.login_link ?? item?.login_link ?? "",
+    user_name: formOverrides.user_name ?? item?.user_name ?? "",
+    password: formOverrides.password ?? "",
+    products_link: formOverrides.products_link ?? item?.products_link ?? "",
   };
   const updateField = (name, value) => setFormOverrides((current) => ({ ...current, [name]: value }));
 
@@ -243,6 +274,10 @@ export function InstagramAISettings({ instagramId, lang }) {
     payload.append("ios_link", formValues.ios_link);
     payload.append("website_url", formValues.website_url);
     payload.append("api_link", formValues.api_link);
+    payload.append("login_link", formValues.login_link);
+    payload.append("user_name", formValues.user_name);
+    if (formValues.password) payload.append("password", formValues.password);
+    payload.append("products_link", formValues.products_link);
     if (aiFile) payload.append("ai_file", aiFile);
 
     setSaving(true);
@@ -250,6 +285,7 @@ export function InstagramAISettings({ instagramId, lang }) {
       await getInstagramAIData(payload);
       toast.success(t.saved);
       setAiFile(null);
+      setFormOverrides((current) => ({ ...current, password: "" }));
       if (fileInputRef.current) fileInputRef.current.value = "";
       refetch();
     } catch (uploadError) {
@@ -287,6 +323,14 @@ export function InstagramAISettings({ instagramId, lang }) {
                   <label key={name} className="block space-y-1.5">
                     <span className="text-sm font-medium text-[var(--foreground)]">{label}</span>
                     <input type="url" value={formValues[name]} onChange={(event) => updateField(name, event.target.value)}
+                      className="h-10 w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 text-sm text-[var(--foreground)] outline-none focus:border-[var(--primary)] focus:ring-2 focus:ring-[var(--ring)]" />
+                  </label>
+                ))}
+                {[["login_link", t.loginLink, "url"], ["products_link", t.productsLink, "url"], ["user_name", t.userName, "text"], ["password", t.password, "password"]].map(([name, label, type]) => (
+                  <label key={name} className="block space-y-1.5">
+                    <span className="text-sm font-medium text-[var(--foreground)]">{label}</span>
+                    <input type={type} autoComplete={name === "password" ? "new-password" : undefined} value={formValues[name]}
+                      onChange={(event) => updateField(name, event.target.value)}
                       className="h-10 w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 text-sm text-[var(--foreground)] outline-none focus:border-[var(--primary)] focus:ring-2 focus:ring-[var(--ring)]" />
                   </label>
                 ))}

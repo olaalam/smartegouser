@@ -34,7 +34,7 @@ export default function DirectWhatsAppPage() {
   const navigate = useNavigate();
   const t = T[lang] ?? T.en;
   const copy = DIRECT_COPY[lang] ?? DIRECT_COPY.en;
-  const { data, loading, error, refetch } = useGet(API_ENDPOINTS.WHATSAPP.ITEMS);
+  const { data, loading, error, refetch } = useGet(API_ENDPOINTS.WHATSAPP.PAGES);
   const { execute: submitSubscription } = usePost();
   const [subscribingId, setSubscribingId] = useState(null);
   const items = data?.data ?? [];

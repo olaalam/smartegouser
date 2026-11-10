@@ -41,7 +41,7 @@ export default function WhatsAppWizard() {
   const t = T[lang] ?? T.en;
   const isRTL = lang === "ar";
   const [step, setStep] = useState(null);
-  const { data, loading, error, refetch } = useGet(API_ENDPOINTS.WHATSAPP.ITEMS);
+  const { data, loading, error, refetch } = useGet(API_ENDPOINTS.WHATSAPP.PAGES);
   const items = data?.data ?? [];
   const hasVerifiedNumber = items.some((item) => Boolean(item.phone_verified_at));
   const requestedPackageStep = searchParams.get("step") === "package";

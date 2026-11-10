@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowUpRight, Camera, CreditCard, Info, MessageCircle, MessageSquare } from "lucide-react";
+import { ArrowUpRight, Camera, Info, MessageCircle, MessageSquare } from "lucide-react";
 import { useGet } from "../hooks/useGet";
 import { API_ENDPOINTS } from "../utils/constants";
 import { useMinimumLoading } from "../hooks/useMinimumLoading";
@@ -10,6 +10,7 @@ import { localizeApiLabel } from "../utils/localization";
 import Loader from "../components/common/Loader";
 import EmptyState from "../components/ui/EmptyState";
 import { InstagramAISettings } from "../components/messenger/AISettingsPanel";
+import SubscriptionButton from "../components/common/SubscriptionButton";
 
 const copy = {
   en: {
@@ -37,7 +38,7 @@ export default function InstagramPageManagePage() {
   const t = copy[lang] ?? copy.en;
   const [activeTab, setActiveTab] = useState("info");
   const { data: accountsData, loading: accountsLoading, error, refetch } = useGet(API_ENDPOINTS.INSTAGRAM.ACCOUNTS);
-  const { data: chatData, loading: chatLoading } = useGet(API_ENDPOINTS.INSTAGRAM.CHAT_ACCOUNTS);
+  const { data: chatData, loading: chatLoading, refetch: refetchChatAccounts } = useGet(API_ENDPOINTS.INSTAGRAM.CHAT_ACCOUNTS);
   const { isVisible: showLoader, beginLoading } = useMinimumLoading(accountsLoading || chatLoading);
   const accounts = accountsData?.data ?? [];
   const chatAccounts = chatData?.data ?? [];
@@ -95,6 +96,15 @@ export default function InstagramPageManagePage() {
 
                   {activeTab === "info" ? (
                     <section id="instagram-info-panel" role="tabpanel" aria-labelledby="instagram-info-tab" className="space-y-6">
+                      <div className="flex justify-end">
+                        <SubscriptionButton
+                          channel="instagram"
+                          resourceId={account.instagram_id}
+                          active={hasChatAccess(chatAccount ?? account)}
+                          lang={lang}
+                          onUpdated={() => Promise.all([refetch(), refetchChatAccounts()])}
+                        />
+                      </div>
                       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_240px]">
                         <div>
                           <h2 className="mb-3 text-base font-semibold text-[var(--foreground)]">{t.details}</h2>

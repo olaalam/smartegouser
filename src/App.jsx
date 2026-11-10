@@ -22,6 +22,7 @@ import PaymentResultPage from "./pages/PaymentResultPage";
 import TelegramConnectPage from "./pages/TelegramConnectPage";
 import TikTokConnectPage from "./pages/TikTokConnectPage";
 import TikTokChatPage from "./pages/TikTokChatPage";
+import EcommerceOrdersPage from "./pages/EcommerceOrdersPage";
 
 // ─── Route guards ─────────────────────────────────────────────────────────────
 
@@ -97,6 +98,11 @@ export default function App() {
         <Route
           path="/user-orders"
           element={<PrivateRoute><AppLayout><UserOrdersPage /></AppLayout></PrivateRoute>}
+        />
+
+        <Route
+          path="/ecommerce-orders"
+          element={<PrivateRoute><AppLayout><EcommerceOrdersPage /></AppLayout></PrivateRoute>}
         />
 
         <Route

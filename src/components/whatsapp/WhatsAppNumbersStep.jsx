@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { toast } from "sonner";
 import { CheckCircle2, Loader2, Pencil, Plus, Send, Smartphone, Trash2, Upload, X } from "lucide-react";
+import { getWhatsAppItem } from "../../api/whatsappApi";
+import SubscriptionButton from "../common/SubscriptionButton";
 import { useDelete } from "../../hooks/useDelete";
 import { useMutation } from "../../hooks/useMutation";
 import { usePost } from "../../hooks/usePost";
@@ -12,6 +14,10 @@ import SectionCard from "../ui/SectionCard";
 
 const EMPTY_FORM = {
   phone: "", verified_name: "", android_link: "", ios_link: "", website_url: "", api_link: "",
+  login_link: "", user_name: "", password: "", products_link: "",
+  order_confirmation_enabled: false, ecommerce_platform: "custom",
+  shopify_access_token: "", client_id: "", client_secret: "", custom_api_key: "",
+  api_confirm_url: "", api_reject_url: "", api_edit_url: "",
   auto_request_code: false, ai_context: "", ai_file: null, ai_file_value: "",
 };
 const inputClass = "w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm text-[var(--foreground)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]";
@@ -23,6 +29,10 @@ function makePayload(form, lang) {
   Object.entries(form).forEach(([key, value]) => {
     if (key === "auto_request_code") {
       payload.append(key, value ? "1" : "0");
+    } else if (key === "order_confirmation_enabled") {
+      payload.append(key, value ? "1" : "0");
+    } else if (["password", "client_secret", "shopify_access_token", "custom_api_key"].includes(key) && !value) {
+      return;
     } else if (key !== "ai_file" && key !== "ai_file_value" && value !== null && value !== undefined) {
       payload.append(key, String(value));
     }
@@ -80,6 +90,19 @@ export default function WhatsAppNumbersStep({ items, loading, error, refetch, la
       ios_link: form.ios_link || null,
       website_url: form.website_url || null,
       api_link: form.api_link || null,
+      login_link: form.login_link || null,
+      user_name: form.user_name || null,
+      products_link: form.products_link || null,
+      order_confirmation_enabled: form.order_confirmation_enabled,
+      ecommerce_platform: form.ecommerce_platform,
+      ...(form.shopify_access_token ? { shopify_access_token: form.shopify_access_token } : {}),
+      api_confirm_url: form.api_confirm_url || null,
+      api_reject_url: form.api_reject_url || null,
+      api_edit_url: form.api_edit_url || null,
+      client_id: form.client_id || null,
+      ...(form.client_secret ? { client_secret: form.client_secret } : {}),
+      ...(form.custom_api_key ? { custom_api_key: form.custom_api_key } : {}),
+      ...(form.password ? { password: form.password } : {}),
       ai_context: form.ai_context || null,
       ai_file: form.ai_file_value || null,
     } : makePayload(form, lang);
@@ -102,21 +125,41 @@ export default function WhatsAppNumbersStep({ items, loading, error, refetch, la
     } else if (!isEditing) onCreated?.(createdPhone);
   };
 
-  const editItem = (item) => {
-    setEditingId(item.id);
-    setFormOpen(true);
-    setForm({
-      ...EMPTY_FORM,
-      phone: item.phone ?? "",
-      verified_name: item.verified_name ?? "",
-      android_link: item.android_link ?? "",
-      ios_link: item.ios_link ?? "",
-      website_url: item.website_url ?? "",
-      api_link: item.api_link ?? "",
-      ai_context: item.ai_context ?? "",
-      ai_file_value: item.ai_file ?? "",
-      ai_file: null,
-    });
+  const editItem = async (item) => {
+    try {
+      const response = await getWhatsAppItem(item.id);
+      const details = response.data?.data ?? response.data ?? item;
+      setEditingId(details.id);
+      setFormOpen(true);
+      setForm({
+        ...EMPTY_FORM,
+        phone: details.phone ?? "",
+        verified_name: details.verified_name ?? "",
+        android_link: details.android_link ?? "",
+        ios_link: details.ios_link ?? "",
+        website_url: details.website_url ?? "",
+        api_link: details.api_link ?? "",
+        login_link: details.login_link ?? "",
+        user_name: details.user_name ?? "",
+        password: "",
+        products_link: details.products_link ?? "",
+        order_confirmation_enabled: Boolean(details.order_confirmation_enabled),
+        ecommerce_platform: details.ecommerce_platform ?? "custom",
+        shopify_access_token: "",
+        api_confirm_url: details.api_confirm_url ?? "",
+        api_reject_url: details.api_reject_url ?? "",
+        api_edit_url: details.api_edit_url ?? "",
+        client_id: details.client_id ?? "",
+        client_secret: "",
+        custom_api_key: "",
+        ai_context: details.ai_context ?? "",
+        ai_file_value: details.ai_file ?? "",
+        ai_file: null,
+      });
+    } catch (error) {
+      console.error("Could not load WhatsApp number settings:", error);
+      toast.error(error.response?.data?.message || t.error);
+    }
   };
 
   const removeItem = async (item) => {
@@ -168,6 +211,15 @@ export default function WhatsAppNumbersStep({ items, loading, error, refetch, la
                   </span>
                 </div>
                 <div className="flex justify-end gap-2">
+                  {(!directMode || hasChatAccess(item)) && (
+                    <SubscriptionButton
+                      channel="whatsapp"
+                      resourceId={item.id}
+                      active={hasChatAccess(item)}
+                      lang={lang}
+                      onUpdated={refetch}
+                    />
+                  )}
                   {String(item.token_type).toLowerCase() === "customer" && (
                     <button
                       type="button"
@@ -266,6 +318,92 @@ export default function WhatsAppNumbersStep({ items, loading, error, refetch, la
                       <input className={inputClass} type="url" value={form.api_link}
                         onChange={(event) => setForm((current) => ({ ...current, api_link: event.target.value }))} />
                     </label>
+                    <label className="space-y-1.5 text-sm font-medium text-[var(--foreground)]">
+                      <span>{t.loginLink}</span>
+                      <input className={inputClass} type="url" value={form.login_link}
+                        onChange={(event) => setForm((current) => ({ ...current, login_link: event.target.value }))} />
+                    </label>
+                    <label className="space-y-1.5 text-sm font-medium text-[var(--foreground)]">
+                      <span>{t.productsLink}</span>
+                      <input className={inputClass} type="url" value={form.products_link}
+                        onChange={(event) => setForm((current) => ({ ...current, products_link: event.target.value }))} />
+                    </label>
+                    <label className="space-y-1.5 text-sm font-medium text-[var(--foreground)]">
+                      <span>{t.userName}</span>
+                      <input className={inputClass} type="text" autoComplete="username" value={form.user_name}
+                        onChange={(event) => setForm((current) => ({ ...current, user_name: event.target.value }))} />
+                    </label>
+                    <label className="space-y-1.5 text-sm font-medium text-[var(--foreground)]">
+                      <span>{t.password}</span>
+                      <input className={inputClass} type="password" autoComplete="new-password" value={form.password}
+                        onChange={(event) => setForm((current) => ({ ...current, password: event.target.value }))} />
+                    </label>
+                  </div>
+                </div>
+
+                <div className="space-y-3 border-t border-[var(--border)] pt-5">
+                  <p className={sectionHeadingClass}>{t.orderSettings}</p>
+                  <label className="flex items-center gap-2 text-sm font-medium text-[var(--foreground)]">
+                    <input type="checkbox" checked={Boolean(form.order_confirmation_enabled)}
+                      onChange={(event) => setForm((current) => ({ ...current, order_confirmation_enabled: event.target.checked }))}
+                      className="h-4 w-4 rounded border-[var(--border)] accent-[var(--primary)]" />
+                    {t.orderConfirmation}
+                  </label>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <label className="space-y-1.5 text-sm font-medium text-[var(--foreground)]">
+                      <span>{t.ecommercePlatform}</span>
+                      <select className={inputClass} value={form.ecommerce_platform}
+                        onChange={(event) => setForm((current) => ({ ...current, ecommerce_platform: event.target.value }))}>
+                        <option value="custom">{t.platformCustom}</option>
+                        <option value="woocommerce">{t.platformWoo}</option>
+                        <option value="shopify">{t.platformShopify}</option>
+                      </select>
+                    </label>
+                    {form.ecommerce_platform === "woocommerce" && (
+                      <>
+                        <label className="space-y-1.5 text-sm font-medium text-[var(--foreground)]">
+                          <span>{t.clientId}</span>
+                          <input className={inputClass} type="text" value={form.client_id}
+                            onChange={(event) => setForm((current) => ({ ...current, client_id: event.target.value }))} />
+                        </label>
+                        <label className="space-y-1.5 text-sm font-medium text-[var(--foreground)]">
+                          <span>{t.clientSecret}</span>
+                          <input className={inputClass} type="password" autoComplete="new-password" value={form.client_secret}
+                            onChange={(event) => setForm((current) => ({ ...current, client_secret: event.target.value }))} />
+                        </label>
+                      </>
+                    )}
+                    {form.ecommerce_platform === "shopify" && (
+                      <label className="space-y-1.5 text-sm font-medium text-[var(--foreground)]">
+                        <span>{t.shopifyAccessToken}</span>
+                        <input className={inputClass} type="password" autoComplete="new-password" value={form.shopify_access_token}
+                          onChange={(event) => setForm((current) => ({ ...current, shopify_access_token: event.target.value }))} />
+                      </label>
+                    )}
+                    {form.ecommerce_platform === "custom" && (
+                      <>
+                        <label className="space-y-1.5 text-sm font-medium text-[var(--foreground)]">
+                          <span>{t.customApiKey}</span>
+                          <input className={inputClass} type="password" autoComplete="new-password" value={form.custom_api_key}
+                            onChange={(event) => setForm((current) => ({ ...current, custom_api_key: event.target.value }))} />
+                        </label>
+                        <label className="space-y-1.5 text-sm font-medium text-[var(--foreground)]">
+                          <span>{t.confirmOrderUrl}</span>
+                          <input className={inputClass} type="url" value={form.api_confirm_url}
+                            onChange={(event) => setForm((current) => ({ ...current, api_confirm_url: event.target.value }))} />
+                        </label>
+                        <label className="space-y-1.5 text-sm font-medium text-[var(--foreground)]">
+                          <span>{t.rejectOrderUrl}</span>
+                          <input className={inputClass} type="url" value={form.api_reject_url}
+                            onChange={(event) => setForm((current) => ({ ...current, api_reject_url: event.target.value }))} />
+                        </label>
+                        <label className="space-y-1.5 text-sm font-medium text-[var(--foreground)]">
+                          <span>{t.editOrderUrl}</span>
+                          <input className={inputClass} type="url" value={form.api_edit_url}
+                            onChange={(event) => setForm((current) => ({ ...current, api_edit_url: event.target.value }))} />
+                        </label>
+                      </>
+                    )}
                   </div>
                 </div>
 

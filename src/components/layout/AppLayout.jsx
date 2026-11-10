@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import { useSelector } from "react-redux";
-import { Camera, ChevronLeft, ChevronRight, ClipboardList, LayoutDashboard, Link2, MessageCircle, MessageSquare, Phone, Send } from "lucide-react";
+import { Camera, ChevronLeft, ChevronRight, ClipboardList, LayoutDashboard, Link2, MessageCircle, MessageSquare, Phone, Send, ShoppingBag } from "lucide-react";
 import Navbar from "./Navbar";
 import { useGet } from "../../hooks/useGet";
 import { getEcho } from "../../api/echoService";
@@ -37,6 +37,7 @@ const navigation = [
   { to: "/dashboard", label: { en: "Dashboard", ar: "لوحة التحكم" }, icon: LayoutDashboard },
   { to: "/connect", label: { en: "Connect accounts", ar: "ربط الحسابات" }, icon: Link2 },
   { to: "/user-orders", label: { en: "User Orders", ar: "طلبات المستخدم" }, icon: ClipboardList },
+  { to: "/ecommerce-orders", label: { en: "Store Orders", ar: "طلبات المتجر" }, icon: ShoppingBag },
 ];
 
 export default function AppLayout({ children }) {

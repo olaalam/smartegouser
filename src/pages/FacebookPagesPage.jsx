@@ -244,6 +244,7 @@ import { useMinimumLoading } from "../hooks/useMinimumLoading";
 import { hasChatAccess } from "../utils/chatAccess";
 import Loader from "../components/common/Loader";
 import EmptyState from "../components/ui/EmptyState";
+import SubscriptionButton from "../components/common/SubscriptionButton";
 
 /* ------------------------------------------------------------------ */
 /* Direct subscription endpoints (kept here so everything is in one file) */
@@ -318,8 +319,8 @@ export default function FacebookPagesPage() {
   const t = copy[lang] ?? copy.en;
   const navigate = useNavigate();
   const { data, loading, error, refetch } = useGet(API_ENDPOINTS.MESSENGER.PAGES);
-  const { data: instagramData, loading: instagramLoading, error: instagramError } = useGet(API_ENDPOINTS.INSTAGRAM.ACCOUNTS);
-  const { data: instagramChatData } = useGet(API_ENDPOINTS.INSTAGRAM.CHAT_ACCOUNTS);
+  const { data: instagramData, loading: instagramLoading, error: instagramError, refetch: refetchInstagram } = useGet(API_ENDPOINTS.INSTAGRAM.ACCOUNTS);
+  const { data: instagramChatData, refetch: refetchInstagramChats } = useGet(API_ENDPOINTS.INSTAGRAM.CHAT_ACCOUNTS);
   const { isVisible: showLoader, beginLoading } = useMinimumLoading(loading);
   const pages = data?.data ?? [];
   const instagramAccounts = instagramData?.data ?? [];
@@ -469,8 +470,12 @@ export default function FacebookPagesPage() {
                             <span className="mt-0.5 block truncate text-xs text-[var(--muted-foreground)]">{page.page_category || page.page_id}</span>
                           </span>
                         </div>
-                        <div className="flex items-center justify-between gap-3">
+                        <div className="flex flex-wrap items-center justify-between gap-3">
                           <StatusBadge subscribed={subscribed} t={t} />
+                          <div className="flex flex-wrap items-center gap-2">
+                          {subscribed && (
+                            <SubscriptionButton channel="messenger" resourceId={page.page_id} active lang={lang} onUpdated={refetch} />
+                          )}
                           <button type="button" disabled={isSubscribing} onClick={() => openFacebookPage(page)}
                             className="inline-flex min-h-9 items-center gap-2 rounded-lg px-3 text-xs font-semibold text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
                             style={{ background: "var(--primary)" }}>
@@ -481,6 +486,7 @@ export default function FacebookPagesPage() {
                                 : <CreditCard className="h-3.5 w-3.5" aria-hidden="true" />}
                             {isSubscribing ? t.subscribing : subscribed ? t.pageManage : t.pageSubscribe}
                           </button>
+                          </div>
                         </div>
                       </div>
                     </li>
@@ -523,8 +529,18 @@ export default function FacebookPagesPage() {
                                   <span className="mt-0.5 block truncate text-xs text-[var(--muted-foreground)]">{account.instagram_id}</span>
                                 </span>
                               </div>
-                              <div className="flex items-center justify-between gap-3">
+                              <div className="flex flex-wrap items-center justify-between gap-3">
                                 <StatusBadge subscribed={subscribed} t={t} />
+                                <div className="flex flex-wrap items-center gap-2">
+                                {subscribed && (
+                                  <SubscriptionButton
+                                    channel="instagram"
+                                    resourceId={account.instagram_id}
+                                    active
+                                    lang={lang}
+                                    onUpdated={() => Promise.all([refetchInstagram(), refetchInstagramChats()])}
+                                  />
+                                )}
                                 <button type="button" disabled={isSubscribing} onClick={() => openInstagramAccount(account)}
                                   className="inline-flex min-h-9 items-center gap-2 rounded-lg px-3 text-xs font-semibold text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
                                   style={{ background: "var(--primary)" }}>
@@ -535,6 +551,7 @@ export default function FacebookPagesPage() {
                                       : <CreditCard className="h-3.5 w-3.5" aria-hidden="true" />}
                                   {isSubscribing ? t.subscribing : subscribed ? t.instagramManage : t.instagramSubscribe}
                                 </button>
+                                </div>
                               </div>
                             </div>
                           </li>

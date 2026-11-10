@@ -12,8 +12,14 @@ export const getTelegramAccounts = (params = {}) =>
 export const getTelegramAccount = (id) =>
   axiosInstance.get(`${API_ENDPOINTS.TELEGRAM.ACCOUNTS}/${encodeURIComponent(id)}`);
 
-export const updateTelegramAccount = (id, body) =>
-  axiosInstance.put(`${API_ENDPOINTS.TELEGRAM.ACCOUNTS}/${encodeURIComponent(id)}`, body);
+export const updateTelegramAccount = (id, body) => {
+  const isFormData = body instanceof FormData;
+  return axiosInstance.put(
+    `${API_ENDPOINTS.TELEGRAM.ACCOUNTS}/${encodeURIComponent(id)}`,
+    body,
+    isFormData ? { headers: { "Content-Type": "multipart/form-data" } } : undefined
+  );
+};
 
 export const getTelegramConversations = (params = {}) =>
   axiosInstance.get(API_ENDPOINTS.TELEGRAM.CONVERSATIONS, { params });

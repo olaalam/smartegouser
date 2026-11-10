@@ -1,4 +1,11 @@
 import axiosInstance from "./axiosInstance";
+import { API_ENDPOINTS } from "../utils/constants";
+
+export const getWhatsAppSetupPages = (params = {}) =>
+  axiosInstance.get(API_ENDPOINTS.WHATSAPP.PAGES, { params });
+
+export const getWhatsAppItem = (id) =>
+  axiosInstance.get(API_ENDPOINTS.WHATSAPP.ITEM(id));
 
 // ── 1. List all WhatsApp Numbers ─────────────────────────────────────────────
 // GET /api/user/chat/whatsapp/numbers
@@ -31,4 +38,4 @@ export const markWhatsAppRead = (body) =>
   axiosInstance.post("user/chat/mark-as-read", { channel: "whatsapp", ...body });
 
 export const getWhatsAppAIData = (id) =>
-  axiosInstance.get(`user/whats/ai_data/${encodeURIComponent(id)}`);
+  axiosInstance.get(`${API_ENDPOINTS.WHATSAPP.AI_DATA}/${encodeURIComponent(id)}`);

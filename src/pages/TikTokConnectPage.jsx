@@ -13,7 +13,6 @@ import {
   Upload,
   Globe,
   Smartphone,
-  AlertCircle,
   Plus,
   Loader2,
 } from "lucide-react";
@@ -24,12 +23,15 @@ import {
   getTikTokAuthUrl,
   connectTikTokAccount,
   getTikTokAccounts,
+  getTikTokAccount,
   updateTikTokAccount,
   refreshTikTokToken,
   disconnectTikTokAccount,
 } from "../api/tiktokApi";
 import { saveChannelConnection } from "../utils/channelConnections";
 import { publishTikTokAccountsUpdated } from "../utils/chatUnreadEvents";
+import SubscriptionButton from "../components/common/SubscriptionButton";
+import { hasChatAccess } from "../utils/chatAccess";
 
 const TikTokIcon = ({ className = "h-5 w-5", style = {} }) => (
   <svg viewBox="0 0 24 24" fill="currentColor" className={className} style={style}>
@@ -61,6 +63,10 @@ const COPY = {
     aiFile: "Knowledge / Menu File (.txt or .md, max 2MB)",
     websiteUrl: "Website URL",
     apiLink: "API link",
+    loginLink: "Login link",
+    userName: "Username",
+    password: "Password",
+    productsLink: "Products link",
     androidLink: "Android App URL",
     iosLink: "iOS App URL",
     statusToggle: "Auto-Reply Status",
@@ -123,6 +129,10 @@ const COPY = {
     aiFile: "ملف المنيو / البيانات (.txt أو .md بحد أقصى 2MB)",
     websiteUrl: "رابط موقع المتجر للطلب أونلاين",
     apiLink: "رابط API",
+    loginLink: "رابط تسجيل الدخول",
+    userName: "اسم المستخدم",
+    password: "كلمة المرور",
+    productsLink: "رابط المنتجات",
     androidLink: "رابط تطبيق Android",
     iosLink: "رابط تطبيق iOS",
     statusToggle: "حالة الرد التلقائي",
@@ -188,6 +198,10 @@ export default function TikTokConnectPage() {
     aiContext: "",
     websiteUrl: "",
     apiLink: "",
+    loginLink: "",
+    userName: "",
+    password: "",
+    productsLink: "",
     androidLink: "",
     iosLink: "",
     aiFile: null,
@@ -201,6 +215,10 @@ export default function TikTokConnectPage() {
     aiContext: "",
     websiteUrl: "",
     apiLink: "",
+    loginLink: "",
+    userName: "",
+    password: "",
+    productsLink: "",
     androidLink: "",
     iosLink: "",
     aiFile: null,
@@ -296,6 +314,10 @@ export default function TikTokConnectPage() {
       if (manualForm.aiContext) formData.append("ai_context", manualForm.aiContext.trim());
       if (manualForm.websiteUrl) formData.append("website_url", manualForm.websiteUrl.trim());
       if (manualForm.apiLink) formData.append("api_link", manualForm.apiLink.trim());
+      if (manualForm.loginLink) formData.append("login_link", manualForm.loginLink.trim());
+      if (manualForm.userName) formData.append("user_name", manualForm.userName.trim());
+      if (manualForm.password) formData.append("password", manualForm.password);
+      if (manualForm.productsLink) formData.append("products_link", manualForm.productsLink.trim());
       if (manualForm.androidLink) formData.append("android_link", manualForm.androidLink.trim());
       if (manualForm.iosLink) formData.append("ios_link", manualForm.iosLink.trim());
       if (manualForm.aiFile) formData.append("ai_file", manualForm.aiFile);
@@ -313,6 +335,10 @@ export default function TikTokConnectPage() {
         aiContext: "",
         websiteUrl: "",
         apiLink: "",
+        loginLink: "",
+        userName: "",
+        password: "",
+        productsLink: "",
         androidLink: "",
         iosLink: "",
         aiFile: null,
@@ -327,17 +353,28 @@ export default function TikTokConnectPage() {
   };
 
   // Open edit modal
-  const openEditModal = (account) => {
-    setEditingAccount(account);
-    setEditForm({
-      status: account.status || "active",
-      aiContext: account.ai_context || "",
-      websiteUrl: account.website_url || "",
-      apiLink: account.api_link || "",
-      androidLink: account.android_link || "",
-      iosLink: account.ios_link || "",
-      aiFile: null,
-    });
+  const openEditModal = async (account) => {
+    try {
+      const response = await getTikTokAccount(account.id);
+      const details = response.data?.data ?? response.data ?? account;
+      setEditingAccount(details);
+      setEditForm({
+        status: details.status || "active",
+        aiContext: details.ai_context || "",
+        websiteUrl: details.website_url || "",
+        apiLink: details.api_link || "",
+        loginLink: details.login_link || "",
+        userName: details.user_name || "",
+        password: "",
+        productsLink: details.products_link || "",
+        androidLink: details.android_link || "",
+        iosLink: details.ios_link || "",
+        aiFile: null,
+      });
+    } catch (error) {
+      console.error("Could not load TikTok account settings:", error);
+      toast.error(error.response?.data?.message || t.toast.loadError);
+    }
   };
 
   // Submit edit form
@@ -352,6 +389,10 @@ export default function TikTokConnectPage() {
       if (editForm.aiContext !== undefined) formData.append("ai_context", editForm.aiContext.trim());
       if (editForm.websiteUrl !== undefined) formData.append("website_url", editForm.websiteUrl.trim());
       if (editForm.apiLink !== undefined) formData.append("api_link", editForm.apiLink.trim());
+      if (editForm.loginLink !== undefined) formData.append("login_link", editForm.loginLink.trim());
+      if (editForm.userName !== undefined) formData.append("user_name", editForm.userName.trim());
+      if (editForm.password) formData.append("password", editForm.password);
+      if (editForm.productsLink !== undefined) formData.append("products_link", editForm.productsLink.trim());
       if (editForm.androidLink !== undefined) formData.append("android_link", editForm.androidLink.trim());
       if (editForm.iosLink !== undefined) formData.append("ios_link", editForm.iosLink.trim());
       if (editForm.aiFile) formData.append("ai_file", editForm.aiFile);
@@ -558,6 +599,32 @@ export default function TikTokConnectPage() {
                   />
                 </div>
                 <div>
+                  <label className="mb-1 block text-xs font-semibold">{t.loginLink}</label>
+                  <input type="url" value={manualForm.loginLink}
+                    onChange={(e) => setManualForm({ ...manualForm, loginLink: e.target.value })}
+                    placeholder="https://..."
+                    className="w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm outline-none focus:border-[#FE2C55]" />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-semibold">{t.productsLink}</label>
+                  <input type="url" value={manualForm.productsLink}
+                    onChange={(e) => setManualForm({ ...manualForm, productsLink: e.target.value })}
+                    placeholder="https://..."
+                    className="w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm outline-none focus:border-[#FE2C55]" />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-semibold">{t.userName}</label>
+                  <input type="text" autoComplete="username" value={manualForm.userName}
+                    onChange={(e) => setManualForm({ ...manualForm, userName: e.target.value })}
+                    className="w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm outline-none focus:border-[#FE2C55]" />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-semibold">{t.password}</label>
+                  <input type="password" autoComplete="new-password" value={manualForm.password}
+                    onChange={(e) => setManualForm({ ...manualForm, password: e.target.value })}
+                    className="w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm outline-none focus:border-[#FE2C55]" />
+                </div>
+                <div>
                   <label className="mb-1 block text-xs font-semibold">{t.androidLink}</label>
                   <input
                     type="url"
@@ -648,7 +715,7 @@ export default function TikTokConnectPage() {
             <div className="grid gap-5 md:grid-cols-2">
               {accounts.map((account) => {
                 const isActive = account.status === "active";
-                const isSubActive = account.subscription_status === true;
+                const isSubActive = hasChatAccess(account);
                 const msgsCount = account.available_msgs ?? account.msg_number ?? 0;
                 const isLoadingAction = actionLoadingId === account.id;
 
@@ -771,6 +838,13 @@ export default function TikTokConnectPage() {
                       </button>
 
                       <div className="flex items-center gap-1.5">
+                        <SubscriptionButton
+                          channel="tiktok"
+                          resourceId={account.id}
+                          active={isSubActive}
+                          lang={lang}
+                          onUpdated={fetchAccounts}
+                        />
                         <button
                           type="button"
                           onClick={() => openEditModal(account)}
@@ -898,6 +972,32 @@ export default function TikTokConnectPage() {
                     className="w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm outline-none focus:border-[#FE2C55]"
                   />
                 </div>
+                <div>
+                  <label className="mb-1 block text-xs font-semibold">{t.loginLink}</label>
+                  <input type="url" value={editForm.loginLink}
+                    onChange={(e) => setEditForm({ ...editForm, loginLink: e.target.value })}
+                    placeholder="https://..."
+                    className="w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm outline-none focus:border-[#FE2C55]" />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-semibold">{t.productsLink}</label>
+                  <input type="url" value={editForm.productsLink}
+                    onChange={(e) => setEditForm({ ...editForm, productsLink: e.target.value })}
+                    placeholder="https://..."
+                    className="w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm outline-none focus:border-[#FE2C55]" />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-semibold">{t.userName}</label>
+                  <input type="text" autoComplete="username" value={editForm.userName}
+                    onChange={(e) => setEditForm({ ...editForm, userName: e.target.value })}
+                    className="w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm outline-none focus:border-[#FE2C55]" />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-semibold">{t.password}</label>
+                  <input type="password" autoComplete="new-password" value={editForm.password}
+                    onChange={(e) => setEditForm({ ...editForm, password: e.target.value })}
+                    className="w-full rounded-lg border border-[var(--border)] bg-[var(--background)] px-3 py-2 text-sm outline-none focus:border-[#FE2C55]" />
+                </div>
 
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div>
@@ -948,4 +1048,3 @@ export default function TikTokConnectPage() {
     </main>
   );
 }
-
